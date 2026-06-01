@@ -3,6 +3,8 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import NodeCache from "node-cache";
 import { parse } from 'csv-parse/sync';
+import { initializeApp, deleteApp } from "firebase/app";
+import { initializeFirestore, collection, getDocs, doc, setDoc } from "firebase/firestore";
 
 const app = express();
 const PORT = 3000;
@@ -13,6 +15,98 @@ const sheetCache = new NodeCache({ stdTTL: 300 }); // Cache for 5 minutes
 // API Routes
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+// Route to migrate old database data to new database
+app.get("/api/migrate", async (req, res) => {
+  const oldConfig = {
+    apiKey: "AIzaSyAh9oD9otcM2oBaoqHDd88aPMUElaOO0Z4",
+    authDomain: "excellent-shape-307pf.firebaseapp.com",
+    projectId: "excellent-shape-307pf",
+    storageBucket: "excellent-shape-307pf.firebasestorage.app",
+    messagingSenderId: "576850039935",
+    appId: "1:576850039935:web:8cda9d5dd42f11a1935b4a",
+  };
+
+  const newConfig = {
+    apiKey: "AIzaSyCm61Wj9DOhsEN5GfIoQiOTA5LGiThpeyg",
+    authDomain: "tmg-list.firebaseapp.com",
+    projectId: "tmg-list",
+    storageBucket: "tmg-list.firebasestorage.app",
+    messagingSenderId: "104757774501",
+    appId: "1:104757774501:web:2e7882de0230b4342c254c"
+  };
+
+  try {
+    console.log("Starting DB migration...");
+    
+    // Initialize temporary App instances
+    const sourceApp = initializeApp(oldConfig, `source-migration-${Date.now()}`);
+    const destApp = initializeApp(newConfig, `dest-migration-${Date.now()}`);
+
+    const sourceDb = initializeFirestore(sourceApp, {
+      experimentalAutoDetectLongPolling: true,
+    }, "ai-studio-3030118e-7588-4ad8-be33-4d5cbe9e56ea");
+
+    const destDb = initializeFirestore(destApp, {
+      experimentalAutoDetectLongPolling: true,
+    }, "(default)");
+
+    const collections = [
+      "levels",
+      "future_levels",
+      "verifiers",
+      "record_submissions",
+      "app_users",
+      "user_profiles",
+      "admins"
+    ];
+
+    const logs: string[] = [];
+
+    for (const collName of collections) {
+      logs.push(`Migrating collection: ${collName}`);
+      console.log(`Migrating collection: ${collName}`);
+
+      try {
+        const snap = await getDocs(collection(sourceDb, collName));
+        logs.push(`Found ${snap.docs.length} documents in ${collName}`);
+        console.log(`Found ${snap.docs.length} documents in ${collName}`);
+
+        let count = 0;
+        for (const d of snap.docs) {
+          try {
+            await setDoc(doc(destDb, collName, d.id), d.data());
+            count++;
+          } catch (e: any) {
+            logs.push(`Failed to write doc ${d.id}: ${e.message}`);
+          }
+        }
+        logs.push(`Successfully migrated ${count}/${snap.docs.length} documents for ${collName}`);
+        console.log(`Successfully migrated ${count}/${snap.docs.length} documents for ${collName}`);
+      } catch (err: any) {
+        logs.push(`Failed to migrate collection ${collName}: ${err.message}`);
+        console.error(`Failed to migrate collection ${collName}`, err);
+      }
+    }
+
+    // Clean up connections
+    await deleteApp(sourceApp);
+    await deleteApp(destApp);
+
+    res.json({
+      status: "success",
+      message: "Data migrated successfully!",
+      logs
+    });
+  } catch (error: any) {
+    console.error("Migration failed:", error);
+    res.status(500).json({
+      status: "error",
+      message: error.message || String(error),
+      stack: error.stack
+    });
+  }
 });
 
 // Route to fetch levels

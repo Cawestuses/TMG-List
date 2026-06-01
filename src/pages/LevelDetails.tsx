@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { GlowCard } from "../components/ui/GlowCard";
+import { getYouTubeEmbedUrl } from "../lib/utils";
 import type { Level, RecordSubmission } from "../types";
 import { Play, Calendar, User, ShieldCheck, Trophy, Video } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -84,8 +85,20 @@ export default function LevelDetails() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <GlowCard>
-            <div className="aspect-video bg-black/50 rounded-lg overflow-hidden border border-white/5 flex items-center justify-center group cursor-pointer hover:border-white/20 transition-colors">
-              <Play className="w-16 h-16 text-white/20 group-hover:text-white/80 group-hover:scale-110 transition-all duration-300" />
+            <div className="aspect-video bg-black/50 rounded-lg overflow-hidden border border-white/5 flex items-center justify-center relative">
+              {level.video ? (
+                <iframe
+                  className="w-full h-full absolute inset-0"
+                  src={getYouTubeEmbedUrl(level.video)}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <Play className="w-16 h-16 text-white/20" />
+              )}
             </div>
           </GlowCard>
           

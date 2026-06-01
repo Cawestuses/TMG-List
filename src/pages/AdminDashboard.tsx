@@ -26,9 +26,6 @@ export default function AdminDashboard() {
   const [isEditingFuture, setIsEditingFuture] = useState<FutureLevel | null>(null);
   const [futureToDelete, setFutureToDelete] = useState<string | null>(null);
 
-  const [appUsers, setAppUsers] = useState<any[]>([]);
-  const [userToDelete, setUserToDelete] = useState<string | null>(null);
-
   const [isImporting, setIsImporting] = useState(false);
   const [importText, setImportText] = useState("");
   const [importError, setImportError] = useState("");
@@ -37,21 +34,17 @@ export default function AdminDashboard() {
   const [importFutureText, setImportFutureText] = useState("");
   const [importFutureError, setImportFutureError] = useState("");
 
+  const [migrationLoading, setMigrationLoading] = useState(false);
+  const [migrationResult, setMigrationResult] = useState("");
+
   useEffect(() => {
     if (isAdmin) {
       loadLevels();
       loadVerifiers();
       loadFutureLevels();
       loadSubmissions();
-      loadUsers();
     }
   }, [isAdmin]);
-
-  const loadUsers = async () => {
-    const snap = await getDocs(collection(db, "app_users"));
-    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setAppUsers(data);
-  };
 
   const loadSubmissions = async () => {
     const snap = await getDocs(collection(db, "record_submissions"));
@@ -91,6 +84,30 @@ export default function AdminDashboard() {
       alert("Failed to sync: " + e);
     }
     setSyncLoading(false);
+  };
+
+  const handleMigrateOldDatabase = async () => {
+    if (!confirm("Are you sure you want to transfer all data (including levels, verifiers, submissions) from the previous official database to this new database? Any conflicting entries in this new database will be overwritten.")) return;
+    setMigrationLoading(true);
+    setMigrationResult("Migration in progress... Please wait...");
+    try {
+      const res = await fetch("/api/migrate");
+      const data = await res.json();
+      if (data.status === "success") {
+        setMigrationResult(`Migration completed successfully!\n\nLogs:\n${data.logs.join("\n")}`);
+        alert("Database successfully migrated!");
+        await loadLevels();
+        await loadVerifiers();
+        await loadFutureLevels();
+        await loadSubmissions();
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (e: any) {
+      setMigrationResult(`Migration failed: ${e.message}`);
+      alert("Failed to migrate database: " + e.message);
+    }
+    setMigrationLoading(false);
   };
 
   const handleDeleteLevel = (id: string) => {
@@ -144,14 +161,6 @@ export default function AdminDashboard() {
   const handleAcceptSubmission = async (id: string) => {
     await updateDoc(doc(db, "record_submissions", id), { status: "accepted" });
     await loadSubmissions();
-  };
-
-  const confirmDeleteUser = async () => {
-    if (userToDelete) {
-      await deleteDoc(doc(db, "app_users", userToDelete));
-      setUserToDelete(null);
-      await loadUsers();
-    }
   };
 
   const saveLevel = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -373,7 +382,31 @@ export default function AdminDashboard() {
             >
               {syncLoading ? "Syncing..." : "Sync from Data Sheet"}
             </button>
+            <button 
+              onClick={handleMigrateOldDatabase} 
+              disabled={migrationLoading}
+              className="px-4 py-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-bold uppercase disabled:opacity-50"
+            >
+              {migrationLoading ? "Migrating..." : "Migrate Old Database"}
+            </button>
           </div>
+
+          {migrationResult && (
+            <div className="mb-6 p-4 bg-zinc-900 border border-white/10 rounded-xl">
+              <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
+                <h3 className="font-bold text-amber-400 text-sm uppercase tracking-wider">Migration Output</h3>
+                <button 
+                  onClick={() => setMigrationResult("")} 
+                  className="text-xs text-white/40 hover:text-white"
+                >
+                  Clear Logs
+                </button>
+              </div>
+              <pre className="text-xs font-mono text-white/80 overflow-x-auto whitespace-pre-wrap max-h-48 scrollbar">
+                {migrationResult}
+              </pre>
+            </div>
+          )}
 
           <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
             <table className="w-full text-left text-sm">
@@ -567,35 +600,15 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === "users" && (
-        <>
-          <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden max-w-3xl">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/10 bg-black/40">
-                  <th className="p-4">Email / ID</th>
-                  <th className="p-4">Created At</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appUsers.map(u => (
-                  <tr key={u.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="p-4 font-bold">{u.email || u.id}</td>
-                    <td className="p-4 text-white/60">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</td>
-                    <td className="p-4 text-right">
-                      <button onClick={() => setUserToDelete(u.id)} className="text-red-400 hover:underline">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-                {appUsers.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="p-8 text-center text-white/40">No users found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <div className="bg-zinc-900 border border-white/10 rounded-xl p-8 max-w-2xl text-center mx-auto">
+          <h2 className="text-xl font-bold mb-4 font-heading">Users are now managed securely</h2>
+          <p className="text-white/60 mb-6">
+            For security reasons, app users are no longer stored in public database tables. All users are now safely isolated in Firebase Authentication. 
+          </p>
+          <p className="text-white/60">
+            Please use the <strong className="text-white">Authentication &gt; Users</strong> tab in your <a href="https://console.firebase.google.com" target="_blank" className="text-emerald-400 hover:underline">Firebase Console</a> to manage (view, add, or delete) users.
+          </p>
+        </div>
       )}
 
       {isEditingLevel && (
@@ -757,19 +770,6 @@ export default function AdminDashboard() {
             <div className="flex justify-center gap-4">
               <button onClick={() => setSubmissionToDelete(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
               <button onClick={confirmDeleteSubmission} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-white">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {userToDelete && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-sm text-center">
-            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
-            <p className="mb-6">Are you sure you want to delete this user?</p>
-            <div className="flex justify-center gap-4">
-              <button onClick={() => setUserToDelete(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
-              <button onClick={confirmDeleteUser} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-white">Delete</button>
             </div>
           </div>
         </div>

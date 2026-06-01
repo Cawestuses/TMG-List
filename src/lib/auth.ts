@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db } from './firebase';
-import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { auth } from './firebase';
+import { 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut,
+  User as FirebaseUser
+} from 'firebase/auth';
 
 export interface User {
   uid: string;
@@ -24,27 +30,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const checkIsAdmin = (email: string | null) => {
+    if (!email) return false;
+    const expectedAdminEmail = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
+    const alternateAdminEmail = 'Infinity_starmaizik@obsidian.local';
+    const alternateAdminEmail2 = 'admin@obsidian.local';
+    const alternateAdminEmail3 = 'markleonov2010@gmail.com';
+    
+    return email === expectedAdminEmail || 
+           email === `${expectedAdminEmail}@obsidian.local` || 
+           email === alternateAdminEmail || 
+           email === alternateAdminEmail2 ||
+           email === alternateAdminEmail3;
+  };
+
   useEffect(() => {
-    // Check local storage for session
-    const checkSession = async () => {
-      const savedEmail = localStorage.getItem('obsidian_user_email');
-      if (savedEmail) {
-        setUser({ uid: savedEmail, email: savedEmail });
-        
-        const expectedAdminEmail = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
-        if (savedEmail === expectedAdminEmail || savedEmail === `${expectedAdminEmail}@obsidian.local` || savedEmail === 'admin@obsidian.local' || savedEmail === 'markleonov2010@gmail.com') {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
-        }
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        setUser({ uid: firebaseUser.uid, email: firebaseUser.email });
+        setIsAdmin(checkIsAdmin(firebaseUser.email));
       } else {
         setUser(null);
         setIsAdmin(false);
       }
       setLoading(false);
-    };
+    });
     
-    checkSession();
+    return () => unsubscribe();
   }, []);
 
   const loginWithGoogle = async () => {
@@ -52,81 +64,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginWithEmail = async (email: string, pass: string) => {
-    const expectedAdminEmail = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
-    const expectedAdminPass = import.meta.env.VITE_ADMIN_PASSWORD || '123123';
+    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+    const loggedUser = userCredential.user;
     
-    let isEnvAdmin = false;
-    // Allow login if it matches the VITE env credentials
-    if ((email === expectedAdminEmail || email === `${expectedAdminEmail}@obsidian.local`) && pass === expectedAdminPass) {
-      isEnvAdmin = true;
-      // Ensure the admin exists in the database
-      await setDoc(doc(db, 'app_users', email), {
-        email,
-        password: pass,
-        createdAt: new Date().toISOString()
-      }, { merge: true });
-    }
-
-    if (!isEnvAdmin) {
-      const userDoc = await getDoc(doc(db, 'app_users', email));
-      
-      if (!userDoc.exists()) {
-        throw new Error("User not found.");
-      }
-      
-      const userData = userDoc.data();
-      if (userData.password !== pass) {
-        throw new Error("Invalid password.");
-      }
-    }
+    setUser({ uid: loggedUser.uid, email: loggedUser.email });
+    setIsAdmin(checkIsAdmin(loggedUser.email));
     
-    localStorage.setItem('obsidian_user_email', email);
-    setUser({ uid: email, email });
-    
-    if (email === expectedAdminEmail || email === `${expectedAdminEmail}@obsidian.local` || email === 'admin@obsidian.local' || email === 'markleonov2010@gmail.com') {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
-    
-    return { uid: email, email };
+    return { uid: loggedUser.uid, email: loggedUser.email };
   };
   
   const registerWithEmail = async (email: string, pass: string) => {
-    const freshRegUsername = email.split('@')[0].toLowerCase();
+    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+    const newUser = userCredential.user;
     
-    const snap = await getDocs(collection(db, 'app_users'));
-    const userAlreadyExists = snap.docs.some(doc => {
-      const existingEmail = doc.id;
-      const existingUsername = existingEmail.split('@')[0].toLowerCase();
-      return existingUsername === freshRegUsername;
-    });
-
-    if (userAlreadyExists) {
-      throw new Error("User already exists with this username/email. Please login.");
-    }
+    setUser({ uid: newUser.uid, email: newUser.email });
+    setIsAdmin(checkIsAdmin(newUser.email));
     
-    await setDoc(doc(db, 'app_users', email), {
-      email,
-      password: pass,
-      createdAt: new Date().toISOString()
-    });
-    
-    localStorage.setItem('obsidian_user_email', email);
-    setUser({ uid: email, email });
-    
-    const expectedAdminEmail = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
-    if (email === expectedAdminEmail || email === `${expectedAdminEmail}@obsidian.local` || email === 'admin@obsidian.local' || email === 'markleonov2010@gmail.com') {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
-    
-    return { uid: email, email };
+    return { uid: newUser.uid, email: newUser.email };
   };
 
   const logout = async () => {
-    localStorage.removeItem('obsidian_user_email');
+    await signOut(auth);
     setUser(null);
     setIsAdmin(false);
   };
@@ -145,5 +103,6 @@ export function useAuth() {
   }
   return context;
 }
+
 
 
