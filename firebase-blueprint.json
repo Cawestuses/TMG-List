@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "User with admin privileges",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Level": {
+      "title": "Level",
+      "description": "A geometry dash level entry on the list",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "rank": { "type": "number" },
+        "name": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "points": { "type": "number" },
+        "creator": { "type": "string" },
+        "verifier": { "type": "string" },
+        "victors": { "type": "number" },
+        "video": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "thumbnail": { "type": "string" }
+      },
+      "required": ["id", "rank", "name", "difficulty", "points", "creator", "verifier", "victors", "video", "isActive"]
+    }
+  },
+  "firestore": {
+    "admins/{userId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Authorized administrators"
+    },
+    "levels/{levelId}": {
+      "schema": { "$ref": "#/entities/Level" },
+      "description": "Levels on the list"
+    }
+  }
+}

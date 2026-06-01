@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} { allow read, write: if false; }
+
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { 
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) || 
+        request.auth.token.email == 'markleonov2010@gmail.com'
+      ); 
+    }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidLevel(data) {
+      return data.size() >= 10 && data.size() <= 11
+        && data.keys().hasAll(['id', 'rank', 'name', 'difficulty', 'points', 'creator', 'verifier', 'victors', 'video', 'isActive'])
+        && data.id is string && data.id.size() <= 100
+        && data.rank is number
+        && data.name is string && data.name.size() <= 100
+        && data.difficulty is string && data.difficulty.size() <= 50
+        && data.points is number
+        && data.creator is string && data.creator.size() <= 100
+        && data.verifier is string && data.verifier.size() <= 100
+        && data.victors is number
+        && data.video is string && data.video.size() <= 200
+        && data.isActive is bool
+        && (data.keys().hasAll(['thumbnail']) == false || (data.thumbnail is string && data.thumbnail.size() <= 200));
+    }
+
+    match /admins/{userId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && incoming().keys().hasAll(['email', 'createdAt']) && incoming().size() == 2 && incoming().email is string && incoming().createdAt == request.time;
+      allow update: if false; // Immutable
+      allow delete: if isAdmin();
+    }
+
+    match /levels/{levelId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /future_levels/{levelId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /verifiers/{verifierId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /record_submissions/{submissionId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /app_users/{userId} {
+      allow read, write: if true;
+    }
+    match /user_profiles/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

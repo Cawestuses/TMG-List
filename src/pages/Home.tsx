@@ -1,0 +1,127 @@
+import { motion } from "motion/react";
+import { Link } from "react-router-dom";
+import { Trophy, ArrowRight, Play, Swords, Activity, Zap, Users } from "lucide-react";
+import { GlowCard } from "../components/ui/GlowCard";
+import { useEffect, useState } from "react";
+import type { Level } from "../types";
+import { useTranslation } from "react-i18next";
+
+import { useLevels } from "../hooks/useLevels";
+
+export default function Home() {
+  const { levels, loading } = useLevels();
+  const topLevels = levels.slice(0, 3);
+  const { t } = useTranslation();
+
+  return (
+    <div className="space-y-24">
+      {/* Hero Section */}
+      <section className="relative pt-12 pb-20 lg:pt-24 lg:pb-32 overflow-hidden text-center">
+        {/* Background Gradients */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-[#ec4899]/10 via-[#a855f7]/20 to-[#06b6d4]/10 blur-[100px] rounded-full point-events-none" />
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="relative z-10 flex flex-col items-center gap-6"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-zinc-300">
+            <Activity className="w-4 h-4 text-[#06b6d4]" />
+            <span>Database Sync Active</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-heading font-black tracking-tighter">
+            <span dangerouslySetInnerHTML={{ __html: t("home.title").replace('Geometry Dash', '<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#06b6d4] via-[#a855f7] to-[#ec4899]">GEOMETRY DASH</span>') }} />
+          </h1>
+          
+          <p className="text-lg md:text-xl text-zinc-400 max-w-2xl">
+            {t("home.subtitle")}
+          </p>
+
+          <div className="flex items-center gap-4 mt-4">
+            <Link to="/top" className="group relative px-8 py-4 bg-white text-black font-bold rounded-xl overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.3)] transition-all hover:scale-105 active:scale-95">
+              <span className="relative z-10 flex items-center gap-2">
+                {t("home.viewDemonList")} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-zinc-200 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </Link>
+            <Link to="/submit" className="px-8 py-4 bg-white/5 text-white font-bold rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+              {t("home.submitRecord")}
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Top 3 Preview */}
+      <section className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Trophy className="w-8 h-8 text-[#a855f7]" />
+            <h2 className="text-3xl font-heading font-bold">{t("home.latestAdditions")}</h2>
+          </div>
+          <Link to="/top" className="text-zinc-400 hover:text-white transition-colors flex items-center gap-1 text-sm">
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {loading ? (
+            Array(3).fill(0).map((_, i) => (
+              <div key={i} className="h-64 rounded-xl bg-white/5 animate-pulse border border-white/10" />
+            ))
+          ) : (
+            topLevels.map((level, i) => (
+              <Link key={level.id} to={`/level/${level.id}`}>
+                <GlowCard delay={i * 0.1} glowColor={i === 0 ? "accent" : i === 1 ? "secondary" : "primary"} className="h-full transform hover:-translate-y-2 transition-all duration-300">
+                  <div className="flex flex-col h-full justify-between">
+                    <div>
+                      <div className="text-5xl font-black text-white/20 mb-2 font-heading">#{level.rank}</div>
+                      <h3 className="text-2xl font-bold mb-1">{level.name}</h3>
+                      <p className="text-sm text-[#06b6d4] font-medium">{level.difficulty}</p>
+                    </div>
+                    
+                    <div className="mt-6 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-500">{t("levels.points")}</span>
+                        <span className="font-mono font-bold text-[#ec4899]">{level.points}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-500">{t("levels.creatorVerifier")}</span>
+                        <span className="text-zinc-300">{level.creator}</span>
+                      </div>
+                    </div>
+                  </div>
+                </GlowCard>
+              </Link>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* Stats Grid */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: t("home.stats.totalCompletions"), value: "100+", icon: Swords, color: "text-[#ec4899]" },
+          { label: t("home.stats.activePlayers"), value: "2,401", icon: Users, color: "text-[#06b6d4]" },
+          { label: t("home.stats.submissions"), value: "45K+", icon: Activity, color: "text-[#a855f7]" },
+          { label: t("home.stats.liveUpdates"), value: "Operational", icon: Zap, color: "text-emerald-400" },
+        ].map((stat, i) => (
+          <div key={i} className="h-full">
+            <GlowCard delay={0.4 + (i * 0.1)} className="!p-5 h-full">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-lg bg-white/5 ${stat.color}`}>
+                  <stat.icon className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-500 font-medium">{stat.label}</p>
+                  <p className="text-xl font-bold font-mono mt-1">{stat.value}</p>
+                </div>
+              </div>
+            </GlowCard>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
