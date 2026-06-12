@@ -7,10 +7,16 @@ import rateLimit from "express-rate-limit";
 import NodeCache from "node-cache";
 import morgan from "morgan";
 import fs from "fs";
+import cors from "cors";
 
 const app = express();
 app.set('trust proxy', 1 /* number of proxies between user and server */);
-const PORT = 3000;
+
+app.use(cors({
+  origin: [/vercel\.app$/, 'http://localhost:5173'],
+  credentials: true
+}));
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(morgan("dev"));
 app.use(express.static(path.join(process.cwd(), 'public')));

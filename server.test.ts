@@ -31,25 +31,16 @@ vi.mock('firebase/firestore', () => ({
 
 // Stub environment secrets for testing
 vi.stubEnv('ADMIN_API_SECRET', 'test-super-secret-key-123');
-vi.stubEnv('RECAPTCHA_SECRET_KEY', 'test-recaptcha-key-456');
 vi.stubEnv('NODE_ENV', 'test');
 
 // Import server app
 import app from './server';
 
 describe('Express Backend Integration Tests', () => {
-  let fetchSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockDocsList.length = 0;
-    
-    // Spy on global fetch to mock Google reCAPTCHA verification
-    fetchSpy = vi.spyOn(globalThis, 'fetch');
-  });
-
-  afterEach(() => {
-    fetchSpy.mockRestore();
   });
 
   describe('GET /api/health', () => {

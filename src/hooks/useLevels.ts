@@ -26,7 +26,8 @@ export function useLevels() {
 
     if (!isFetching) {
       isFetching = true;
-      fetch("/api/levels")
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      fetch(`${API_BASE_URL}/api/levels`)
         .then(res => res.json())
         .then((data: Level[]) => {
           data.sort((a, b) => a.rank - b.rank);

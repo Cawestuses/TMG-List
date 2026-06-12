@@ -41,7 +41,8 @@ export default function SubmitRecord() {
     const username = user.email ? user.email.split('@')[0] : "Player";
     
     try {
-      const res = await fetch("/api/submit-record", {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${API_BASE_URL}/api/submit-record`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

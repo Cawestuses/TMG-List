@@ -149,7 +149,8 @@ export default function AdminDashboard() {
       await deleteDoc(doc(db, "changelog", changelogToDelete));
       setChangelogToDelete(null);
       await loadChangelogs();
-      fetch('/api/clear-cache', { method: 'POST' });
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
     }
   };
 
@@ -163,7 +164,8 @@ export default function AdminDashboard() {
       });
       setIsEditingChangelog(null);
       await loadChangelogs();
-      fetch('/api/clear-cache', { method: 'POST' });
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
     } catch (err) {
       console.error(err);
       alert("Failed to save changelog.");
@@ -312,7 +314,8 @@ export default function AdminDashboard() {
     setIsSyncingSheets(true);
     setSyncLogs("Connecting and loading data from Google Sheets...\n");
     try {
-      const res = await fetch("/api/sync-sheets", {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${API_BASE_URL}/api/sync-sheets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

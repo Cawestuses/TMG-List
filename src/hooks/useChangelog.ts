@@ -25,7 +25,8 @@ export function useChangelog() {
 
     if (!isFetching) {
       isFetching = true;
-      fetch("/api/changelog")
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      fetch(`${API_BASE_URL}/api/changelog`)
         .then(res => res.json())
         .then((data: ChangelogItem[]) => {
           cachedLog = data;
