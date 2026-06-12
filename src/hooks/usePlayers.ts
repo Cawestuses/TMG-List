@@ -146,6 +146,10 @@ export function usePlayers() {
       }
     });
 
+    Object.keys(profiles).forEach(key => {
+      getStats(key); // Just calling this ensures they are in stats
+    });
+
     const parsedPlayers: Player[] = Object.keys(stats).map(key => {
       const stat = stats[key];
       const originalNameLevelV = levels.find(l => (l.verifier || "").toLowerCase() === key);
@@ -165,8 +169,10 @@ export function usePlayers() {
       if (stat.createdLevels > 3) roles.push("Хостер");
       
       // Admin check - either by exact name or env variable
-      const expectedAdmin = (import.meta.env.VITE_ADMIN_USERNAME || 'admin').toLowerCase();
-      if (key === expectedAdmin || key === "infinify_starmaizik" || key === "infinity_starmaizik") roles.push("Админ");
+      const normalizedKey = key.trim().toLowerCase();
+      if (normalizedKey.startsWith('infinity_starmaizik') || normalizedKey.startsWith('infinify_starmaizik') || normalizedKey === 'markleonov2010@gmail.com') {
+        roles.push("Админ");
+      }
 
       const profile = profiles[key] || {};
 

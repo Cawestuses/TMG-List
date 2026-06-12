@@ -14,7 +14,7 @@ const resources = {
       },
       home: {
         title: "The Pinnacle of Geometry Dash",
-        subtitle: "Explore the top verified extreme demons, track the best players, and submit your own records to the Obsidian List.",
+        subtitle: "Explore the top verified extreme demons, track the best players, and submit your own records to the TMG List.",
         viewDemonList: "View Demon List",
         submitRecord: "Submit Record",
         latestAdditions: "Latest Additions",
@@ -93,9 +93,9 @@ const resources = {
       },
       faq: {
         title: "Frequently Asked Questions",
-        subtitle: "Everything you need to know about the Obsidian List.",
-        q1: "What is the Obsidian List?",
-        a1: "The Obsidian List is a leaderboard ranking the hardest verified levels in Geometry Dash, along with the players who have completed them.",
+        subtitle: "Everything you need to know about the TMG List.",
+        q1: "What is the TMG List?",
+        a1: "The TMG List is a leaderboard ranking the hardest verified levels in Geometry Dash, along with the players who have completed them.",
         q2: "How do I get points?",
         a2: "Points are awarded by completing levels on the list. Harder levels give more points.",
         q3: "What are the rules for submitting a record?",

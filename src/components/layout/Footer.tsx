@@ -9,7 +9,7 @@ export function Footer() {
           <Link to="/admin" className="hover:text-white transition-colors">Admin Panel</Link>
         </div>
         <div className="text-[10px] font-medium text-white/20">
-          OBSIDIAN LIST &bull; <span className="text-white/40 font-mono italic">V-CORE.NEXT.15</span>
+          TMG LIST &bull; <span className="text-white/40 font-mono italic">V-CORE.NEXT.15</span>
         </div>
       </div>
     </footer>

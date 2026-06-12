@@ -1,4 +1,4 @@
-# Obsidian List — Geometry Dash Demon List
+# TMG List — Geometry Dash Demon List
 
 Современный, производительный и визуально безупречный клон **Geometry Dash Demon List** (вдохновленный проектами Pointercrate и Demonlist.org). Приложение спроектировано по принципу архитектуры **Fullstack SPA** с использованием передовых технологий веб-разработки: **React 19**, **Vite**, **Tailwind CSS v4**, **Node.js (Express)**, **Firebase Suite (Firestore & Auth)** и отказоустойчивой системы тестирования **Vitest**.
 

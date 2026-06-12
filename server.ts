@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { initializeApp, deleteApp } from "firebase/app";
-import { initializeFirestore, collection, getDocs, doc, setDoc } from "firebase/firestore";
+import { initializeFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import rateLimit from "express-rate-limit";
 import NodeCache from "node-cache";
 import morgan from "morgan";
@@ -222,6 +222,126 @@ app.get("/api/migrate", checkAdminSecret, async (req, res) => {
       error: error.message || String(error),
       stack: error.stack
     });
+  }
+});
+
+// Sync from Google Sheets (CSV Export format)
+app.post("/api/sync-sheets", async (req, res) => {
+  const { sheetUrl } = req.body;
+  if (!sheetUrl) {
+    return res.status(400).json({ error: "Missing sheetUrl parameter" });
+  }
+
+  try {
+    console.log(`Starting Google Sheets levels sync from: ${sheetUrl}`);
+    const response = await fetch(sheetUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch sheet content: status ${response.status}`);
+    }
+    const csvContent = await response.text();
+    
+    const { parse } = await import('csv-parse/sync');
+    const records = parse(csvContent, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true
+    });
+
+    const logs: string[] = [];
+    let importedCount = 0;
+
+    // Clear existing levels
+    const snap = await getDocs(collection(db, "levels"));
+    logs.push(`Clearing ${snap.docs.length} existing levels before sync...`);
+    for (const d of snap.docs) {
+      await deleteDoc(doc(db, "levels", d.id));
+    }
+
+    // Write new levels
+    for (let i = 0; i < records.length; i++) {
+      const item = records[i] as any;
+      const rank = Number(item.rank || item.Rank || item['#'] || (i + 1));
+      const name = item.name || item.Name || item.title || item.Title || "Unnamed Level";
+      const creator = item.creator || item.Creator || item.author || item.Author || "";
+      const verifier = item.verifier || item.Verifier || "";
+      const points = Number(item.points || item.Points || item.score || item.Score || 0);
+      const video = item.video || item.Video || item.link || item.Link || item.url || item.Url || item.proof || item.Proof || "#";
+      const difficulty = item.difficulty || item.Difficulty || "Extreme Demon";
+      const victors = Number(item.victors || item.Victors || 0);
+      const isActive = item.isActive !== undefined ? (item.isActive === "true" || item.isActive === "TRUE" || item.isActive === true) : true;
+      
+      const levelId = item.id || `lvl-${rank}`;
+      
+      const level = {
+        id: levelId.toString(),
+        rank,
+        name,
+        creator,
+        verifier,
+        points,
+        video,
+        difficulty,
+        victors,
+        isActive
+      };
+
+      await setDoc(doc(db, "levels", level.id), level);
+      importedCount++;
+    }
+
+    cache.flushAll();
+    logs.push(`Successfully imported ${importedCount} levels.`);
+    res.json({
+      status: "success",
+      message: `Successfully synchronized ${importedCount} levels from Google Sheets.`,
+      logs
+    });
+  } catch (err: any) {
+    console.error("Sheet sync error:", err);
+    res.status(500).json({ status: "error", error: err.message || "Failed to sync sheets" });
+  }
+});
+
+// Clean up database submissions and profiles (except admin)
+app.post("/api/clean-database", async (req, res) => {
+  try {
+    const logs: string[] = [];
+    
+    // 1. Clean record_submissions
+    const submissionsSnap = await getDocs(collection(db, "record_submissions"));
+    logs.push(`Deleting ${submissionsSnap.docs.length} record submissions...`);
+    for (const d of submissionsSnap.docs) {
+      await deleteDoc(doc(db, "record_submissions", d.id));
+    }
+    
+    // 2. Clean user_profiles except infinity_starmaizik
+    const profilesSnap = await getDocs(collection(db, "user_profiles"));
+    let profilesDeleted = 0;
+    for (const d of profilesSnap.docs) {
+      const uId = d.id.trim().toLowerCase();
+      if (uId !== "infinity_starmaizik" && uId !== "infinity_starmaizik@obsidian.local") {
+        await deleteDoc(doc(db, "user_profiles", d.id));
+        profilesDeleted++;
+      }
+    }
+    logs.push(`Deleted ${profilesDeleted} user profiles (kept infinity_starmaizik).`);
+    
+    // 3. Clean changelog
+    const changelogSnap = await getDocs(collection(db, "changelog"));
+    logs.push(`Deleting ${changelogSnap.docs.length} changelog entries...`);
+    for (const d of changelogSnap.docs) {
+      await deleteDoc(doc(db, "changelog", d.id));
+    }
+
+    cache.flushAll();
+    res.json({
+      status: "success",
+      message: "Database cleaned successfully",
+      logs
+    });
+  } catch (err: any) {
+    console.error("Database clean error:", err);
+    res.status(500).json({ status: "error", error: err.message || "Failed to clean database" });
   }
 });
 

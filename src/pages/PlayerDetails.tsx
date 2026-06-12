@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { GlowCard } from "../components/ui/GlowCard";
 import { Globe, Trophy, Sword, Target, Medal, Code, Edit2, Check, X, Shield, MessageCircle, Gamepad2, AlignLeft } from "lucide-react";
@@ -22,27 +22,35 @@ export default function PlayerDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [editProfile, setEditProfile] = useState({ discord: "", gdUsername: "", country: "", description: "" });
   const [saving, setSaving] = useState(false);
-  let playerStr = id ? decodeURIComponent(id) : "";
-  let player = players.find(p => p.id === playerStr || p.username.toLowerCase() === playerStr.toLowerCase() || p.id === id);
-        
-  // If not found in the leaderboard list, create a stub profile
-  if (!player && id && !loading) {
-     player = {
-       id: id,
-       username: playerStr,
-       points: 0,
-       rank: 0,
-       completedLevels: 0,
-       createdLevels: 0,
-       verifiedLevels: 0,
-       hardestDemon: "Unknown",
-       country: "UN",
-       roles: [],
-       completedLevelsList: [],
-       progressLevelsList: [],
-       createdLevelsList: []
-     };
-  }
+  const player = useMemo(() => {
+    const playerStr = id ? decodeURIComponent(id) : "";
+    const found = players.find(p => p.id === playerStr || p.username.toLowerCase() === playerStr.toLowerCase() || p.id === id);
+    if (found) return found;
+
+    if (id && !loading) {
+      const normalizedStr = playerStr.trim().toLowerCase();
+      const roles = [];
+      if (normalizedStr.startsWith('infinity_starmaizik') || normalizedStr.startsWith('infinify_starmaizik') || normalizedStr === 'markleonov2010@gmail.com') {
+        roles.push("Админ");
+      }
+      return {
+        id: id,
+        username: playerStr,
+        points: 0,
+        rank: 0,
+        completedLevels: 0,
+        createdLevels: 0,
+        verifiedLevels: 0,
+        hardestDemon: "Unknown",
+        country: "UN",
+        roles: roles,
+        completedLevelsList: [],
+        progressLevelsList: [],
+        createdLevelsList: []
+      };
+    }
+    return null;
+  }, [players, id, loading]);
 
   // Local state to hold the actively displayed profile data after saving without reload
   const displayedProfile = {
@@ -52,17 +60,22 @@ export default function PlayerDetails() {
     description: editProfile.description || player?.description || ""
   };
 
+  const playerDiscord = player?.discord;
+  const playerGd = player?.gdUsername;
+  const playerCountry = player?.country;
+  const playerDesc = player?.description;
+
   // Effect to sync edit form with profile data when entering edit mode
   useEffect(() => {
     if (isEditing && player) {
       setEditProfile({
-        discord: player.discord || "",
-        gdUsername: player.gdUsername || "",
-        country: player.country || player.country || "UN",
-        description: player.description || ""
+        discord: playerDiscord || "",
+        gdUsername: playerGd || "",
+        country: playerCountry || "UN",
+        description: playerDesc || ""
       });
     }
-  }, [isEditing, player]);
+  }, [isEditing, playerDiscord, playerGd, playerCountry, playerDesc]);
 
   const canEdit = user && (isAdmin || user.email?.split('@')[0].toLowerCase() === player?.username.toLowerCase());
 

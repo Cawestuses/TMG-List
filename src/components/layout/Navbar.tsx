@@ -36,7 +36,7 @@ export function Navbar() {
               <Swords className="w-5 h-5 text-white" />
             </div>
             <span className="font-heading font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-              OBSIDIAN <span className="text-purple-400 font-black italic">LIST</span>
+              TMG <span className="text-purple-400 font-black italic">LIST</span>
             </span>
           </Link>
 

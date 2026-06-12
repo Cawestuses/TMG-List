@@ -18,15 +18,16 @@ export default function LevelDetails() {
   const [loadingRecords, setLoadingRecords] = useState(true);
 
   const level = levels.find(l => l.id === id) || null;
+  const levelName = level?.name;
 
   useEffect(() => {
     async function fetchRecords() {
-      if (!level) return;
+      if (!levelName) return;
       try {
         setLoadingRecords(true);
         const q = query(
           collection(db, "record_submissions"),
-          where("levelName", "==", level.name)
+          where("levelName", "==", levelName)
         );
         const snapshot = await getDocs(q);
         const data = snapshot.docs.map(doc => ({
@@ -50,7 +51,7 @@ export default function LevelDetails() {
       }
     }
     fetchRecords();
-  }, [level]);
+  }, [levelName]);
 
   if (loading) return <div className="animate-pulse h-[400px] bg-white/5 rounded-2xl" />;
   if (!level) return <div className="text-center py-20 text-zinc-500">Level not found</div>;

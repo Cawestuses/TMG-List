@@ -41,8 +41,36 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        await loginWithEmail(emailToUse, password);
-        navigate("/");
+        try {
+          await loginWithEmail(emailToUse, password);
+          navigate("/");
+        } catch (loginErr: any) {
+          // Clean up username representation
+          const username = email.includes("@") ? email.split("@")[0] : email;
+          const normalizedUsername = username.trim().toLowerCase();
+          
+          try {
+            // Attempt auto-registration on the fly if user didn't exist
+            await registerWithEmail(emailToUse, password);
+            
+            // Auto-create profile
+            await setDoc(doc(db, "user_profiles", normalizedUsername), {
+              claimed: true,
+              claimedBy: emailToUse,
+              claimedAt: new Date().toISOString(),
+              country: "RU",
+              username: normalizedUsername === "infinity_starmaizik" ? "Infinity_starmaizik" : username,
+              description: normalizedUsername === "infinity_starmaizik" ? "Main Admin of TMG List" : "User of TMG List"
+            }, { merge: true });
+            
+            navigate("/");
+            return;
+          } catch (regErr: any) {
+            console.error("Auto-registration on login failed:", regErr);
+          }
+          
+          throw loginErr;
+        }
       } else {
         const username = email.includes("@") ? email.split("@")[0] : email;
         const normalizedUsername = username.trim().toLowerCase();
@@ -118,7 +146,7 @@ export default function AuthPage() {
           {isLogin ? "Login" : "Register"}
         </h1>
         <p className="text-zinc-400 font-medium">
-          {isLogin ? "Welcome back to Obsidian List" : "Create a new Obsidian List account"}
+          {isLogin ? "Welcome back to TMG List" : "Create a new TMG List account"}
         </p>
       </div>
 

@@ -37,8 +37,10 @@ export default function AdminDashboard() {
   const [importFutureText, setImportFutureText] = useState("");
   const [importFutureError, setImportFutureError] = useState("");
 
-  const [migrationLoading, setMigrationLoading] = useState(false);
-  const [migrationResult, setMigrationResult] = useState("");
+  const [isSyncingSheets, setIsSyncingSheets] = useState(false);
+  const [sheetsUrl, setSheetsUrl] = useState("https://docs.google.com/spreadsheets/d/1X5X9m74H6eTfP8e5a-Cbe6R8d3z9H1Z6iV6h5L6X_-0/export?format=csv");
+  const [isSheetsModalOpen, setIsSheetsModalOpen] = useState(false);
+  const [syncLogs, setSyncLogs] = useState("");
 
   useEffect(() => {
     if (isAdmin) {
@@ -78,30 +80,6 @@ export default function AdminDashboard() {
     const snap = await getDocs(collection(db, "future_levels"));
     const data = snap.docs.map(doc => doc.data() as FutureLevel);
     setFutureLevels(data);
-  };
-
-  const handleMigrateOldDatabase = async () => {
-    if (!confirm("Are you sure you want to transfer all data (including levels, verifiers, submissions) from the previous official database to this new database? Any conflicting entries in this new database will be overwritten.")) return;
-    setMigrationLoading(true);
-    setMigrationResult("Migration in progress... Please wait...");
-    try {
-      const res = await fetch("/api/migrate");
-      const data = await res.json();
-      if (data.status === "success") {
-        setMigrationResult(`Migration completed successfully!\n\nLogs:\n${data.logs.join("\n")}`);
-        alert("Database successfully migrated!");
-        await loadLevels();
-        await loadVerifiers();
-        await loadFutureLevels();
-        await loadSubmissions();
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (e: any) {
-      setMigrationResult(`Migration failed: ${e.message}`);
-      alert("Failed to migrate database: " + e.message);
-    }
-    setMigrationLoading(false);
   };
 
   const handleDeleteLevel = (id: string) => {
@@ -326,6 +304,37 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSyncSheets = async () => {
+    if (!sheetsUrl.trim()) {
+      alert("Please enter a valid Google Sheets CSV URL.");
+      return;
+    }
+    setIsSyncingSheets(true);
+    setSyncLogs("Connecting and loading data from Google Sheets...\n");
+    try {
+      const res = await fetch("/api/sync-sheets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ sheetUrl: sheetsUrl })
+      });
+      const data = await res.json();
+      if (data.status === "success" || data.message) {
+        setSyncLogs(prev => prev + `Success!\n\nLogs:\n${(data.logs || []).join("\n")}`);
+        alert("Levels synchronized successfully from Google Sheets!");
+        await loadLevels();
+      } else {
+        throw new Error(data.error || "Failed to synchronize sheets.");
+      }
+    } catch (err: any) {
+      setSyncLogs(prev => prev + `Error: ${err.message}`);
+      alert("Error: " + err.message);
+    } finally {
+      setIsSyncingSheets(false);
+    }
+  };
+
   if (loading) return <div className="min-h-screen text-white pt-32 text-center">Loading...</div>;
 
   if (!user) {
@@ -395,7 +404,7 @@ export default function AdminDashboard() {
 
       {activeTab === "levels" && (
         <>
-          <div className="flex gap-4 mb-6">
+          <div className="flex flex-wrap gap-4 mb-6">
             <button 
               onClick={() => setIsEditingLevel({
                 id: `lvl-${Date.now()}`, rank: levels.length + 1, name: "", difficulty: "Extreme Demon", points: 0, creator: "", verifier: "", victors: 0, video: "", isActive: true
@@ -411,30 +420,12 @@ export default function AdminDashboard() {
               Import JSON
             </button>
             <button 
-              onClick={handleMigrateOldDatabase} 
-              disabled={migrationLoading}
-              className="px-4 py-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-bold uppercase disabled:opacity-50"
+              onClick={() => setIsSheetsModalOpen(true)}
+              className="px-4 py-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-sm font-bold uppercase"
             >
-              {migrationLoading ? "Migrating..." : "Migrate Old Database"}
+              Sync from Google Sheets
             </button>
           </div>
-
-          {migrationResult && (
-            <div className="mb-6 p-4 bg-zinc-900 border border-white/10 rounded-xl">
-              <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
-                <h3 className="font-bold text-amber-400 text-sm uppercase tracking-wider">Migration Output</h3>
-                <button 
-                  onClick={() => setMigrationResult("")} 
-                  className="text-xs text-white/40 hover:text-white"
-                >
-                  Clear Logs
-                </button>
-              </div>
-              <pre className="text-xs font-mono text-white/80 overflow-x-auto whitespace-pre-wrap max-h-48 scrollbar">
-                {migrationResult}
-              </pre>
-            </div>
-          )}
 
           <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
             <table className="w-full text-left text-sm">
@@ -636,7 +627,7 @@ export default function AdminDashboard() {
           <p className="text-white/60 mb-6">
             For security reasons, app users are no longer stored in public database tables. All users are now safely isolated in Firebase Authentication. 
           </p>
-          <p className="text-white/60">
+          <p className="text-white/60 mb-8">
             Please use the <strong className="text-white">Authentication &gt; Users</strong> tab in your <a href="https://console.firebase.google.com" target="_blank" className="text-emerald-400 hover:underline">Firebase Console</a> to manage (view, add, or delete) users.
           </p>
         </div>
@@ -920,6 +911,51 @@ export default function AdminDashboard() {
             <div className="flex justify-end gap-2">
               <button onClick={() => setIsImportingFuture(false)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
               <button onClick={handleImportFutureText} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded font-bold text-white">Import</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isSheetsModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-2xl">
+            <h2 className="text-xl font-bold mb-2 font-heading text-cyan-400">Sync Levels from Google Sheets (CSV)</h2>
+            <p className="text-sm text-white/60 mb-4">
+              Publish your Google Sheet to the web as a CSV (**File &gt; Share &gt; Publish to web &gt; Comma-separated values (.csv)**), then paste the generated URL below:
+            </p>
+            <input 
+              type="text"
+              className="w-full bg-black border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-cyan-500 font-mono"
+              value={sheetsUrl}
+              onChange={e => setSheetsUrl(e.target.value)}
+              placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv"
+            />
+            
+            {syncLogs && (
+              <div className="bg-black/50 border border-white/5 rounded-xl p-3 mb-4 max-h-48 overflow-y-auto">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-white/30 mb-2">Sync Status Logs</p>
+                <pre className="text-xs font-mono text-zinc-300 whitespace-pre-wrap">{syncLogs}</pre>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button 
+                onClick={() => {
+                  setIsSheetsModalOpen(false);
+                  setSyncLogs("");
+                }} 
+                className="px-4 py-2 rounded-xl text-white/60 hover:text-white text-sm font-medium transition-colors"
+                disabled={isSyncingSheets}
+              >
+                Close
+              </button>
+              <button 
+                onClick={handleSyncSheets} 
+                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:-translate-y-0.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-cyan-500/15 transition-all disabled:opacity-50"
+                disabled={isSyncingSheets}
+              >
+                {isSyncingSheets ? "Syncing..." : "Sync Now"}
+              </button>
             </div>
           </div>
         </div>
