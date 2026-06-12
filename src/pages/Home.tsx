@@ -1,17 +1,28 @@
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { Trophy, ArrowRight, Play, Swords, Activity, Zap, Users } from "lucide-react";
+import { Trophy, ArrowRight, Play, Swords, Activity, Zap, Users, History } from "lucide-react";
 import { GlowCard } from "../components/ui/GlowCard";
 import { useEffect, useState } from "react";
 import type { Level } from "../types";
 import { useTranslation } from "react-i18next";
 
 import { useLevels } from "../hooks/useLevels";
+import { useChangelog } from "../hooks/useChangelog";
+import { usePlayers } from "../hooks/usePlayers";
+import { useAuth } from "../lib/auth";
+import { formatChangelogTime } from "../utils/country";
 
 export default function Home() {
   const { levels, loading } = useLevels();
+  const { logs, loading: logsLoading } = useChangelog();
+  const { players, loading: playersLoading } = usePlayers();
+  const { user } = useAuth();
+  
   const topLevels = levels.slice(0, 3);
   const { t } = useTranslation();
+
+  const userPlayer = user ? players.find(p => (p.username || "").trim().toLowerCase() === (user.email?.split('@')[0] || "").trim().toLowerCase()) : null;
+  const userCountry = userPlayer?.country || "RU";
 
   return (
     <div className="space-y-24">
@@ -26,10 +37,7 @@ export default function Home() {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="relative z-10 flex flex-col items-center gap-6"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-zinc-300">
-            <Activity className="w-4 h-4 text-[#06b6d4]" />
-            <span>Database Sync Active</span>
-          </div>
+          <div className="h-4" />
           
           <h1 className="text-5xl md:text-7xl font-heading font-black tracking-tighter">
             <span dangerouslySetInnerHTML={{ __html: t("home.title").replace('Geometry Dash', '<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#06b6d4] via-[#a855f7] to-[#ec4899]">GEOMETRY DASH</span>') }} />
@@ -53,59 +61,96 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Top 3 Preview */}
-      <section className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Trophy className="w-8 h-8 text-[#a855f7]" />
-            <h2 className="text-3xl font-heading font-bold">{t("home.latestAdditions")}</h2>
+      {/* Top 3 Preview & Changelog Grid */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Trophy className="w-8 h-8 text-[#a855f7]" />
+              <h2 className="text-3xl font-heading font-bold">{t("home.latestAdditions")}</h2>
+            </div>
+            <Link to="/top" className="text-zinc-400 hover:text-white transition-colors flex items-center gap-1 text-sm">
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-          <Link to="/top" className="text-zinc-400 hover:text-white transition-colors flex items-center gap-1 text-sm">
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {loading ? (
+              Array(3).fill(0).map((_, i) => (
+                <div key={i} className="h-64 rounded-xl bg-white/5 animate-pulse border border-white/10" />
+              ))
+            ) : (
+              topLevels.map((level, i) => (
+                <Link key={level.id} to={`/level/${level.id}`}>
+                  <GlowCard delay={i * 0.1} glowColor={i === 0 ? "accent" : i === 1 ? "secondary" : "primary"} className="h-full transform hover:-translate-y-2 transition-all duration-300">
+                    <div className="flex flex-col h-full justify-between">
+                      <div>
+                        <div className="text-5xl font-black text-white/20 mb-2 font-heading">#{level.rank}</div>
+                        <h3 className="text-2xl font-bold mb-1">{level.name}</h3>
+                        <p className="text-sm text-[#06b6d4] font-medium">{level.difficulty}</p>
+                      </div>
+                      
+                      <div className="mt-6 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-zinc-500">{t("levels.points")}</span>
+                          <span className="font-mono font-bold text-[#ec4899]">{level.points}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-zinc-500">{t("levels.creatorVerifier")}</span>
+                          <span className="text-zinc-300">{level.creator}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </GlowCard>
+                </Link>
+              ))
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {loading ? (
-            Array(3).fill(0).map((_, i) => (
-              <div key={i} className="h-64 rounded-xl bg-white/5 animate-pulse border border-white/10" />
-            ))
-          ) : (
-            topLevels.map((level, i) => (
-              <Link key={level.id} to={`/level/${level.id}`}>
-                <GlowCard delay={i * 0.1} glowColor={i === 0 ? "accent" : i === 1 ? "secondary" : "primary"} className="h-full transform hover:-translate-y-2 transition-all duration-300">
-                  <div className="flex flex-col h-full justify-between">
-                    <div>
-                      <div className="text-5xl font-black text-white/20 mb-2 font-heading">#{level.rank}</div>
-                      <h3 className="text-2xl font-bold mb-1">{level.name}</h3>
-                      <p className="text-sm text-[#06b6d4] font-medium">{level.difficulty}</p>
-                    </div>
-                    
-                    <div className="mt-6 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-zinc-500">{t("levels.points")}</span>
-                        <span className="font-mono font-bold text-[#ec4899]">{level.points}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-zinc-500">{t("levels.creatorVerifier")}</span>
-                        <span className="text-zinc-300">{level.creator}</span>
-                      </div>
+        {/* Changelog Column */}
+        <div className="space-y-8">
+          <div className="flex items-center gap-3">
+            <History className="w-7 h-7 text-[#06b6d4]" />
+            <h2 className="text-3xl font-heading font-bold">Changelog</h2>
+          </div>
+          <GlowCard className="!p-0 overflow-hidden h-[300px] flex flex-col">
+            <div className="p-5 flex-1 overflow-y-auto space-y-4 scrollbar">
+              {logsLoading ? (
+                Array(4).fill(0).map((_, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="w-2 h-2 mt-2 rounded-full bg-white/10 animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-white/5 rounded w-3/4 animate-pulse" />
+                      <div className="h-3 bg-white/5 rounded w-1/4 animate-pulse" />
                     </div>
                   </div>
-                </GlowCard>
-              </Link>
-            ))
-          )}
+                ))
+              ) : logs.length > 0 ? (
+                logs.map(log => (
+                  <div key={log.id} className="flex gap-4 group">
+                    <div className="w-2 h-2 mt-2 rounded-full bg-[#06b6d4] group-hover:shadow-[0_0_10px_#06b6d4] transition-shadow" />
+                    <div>
+                      <p className="text-sm font-medium text-white/90">{log.content}</p>
+                      <p className="text-xs text-white/40 font-mono mt-1">{formatChangelogTime(log.date, userCountry)}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-zinc-500 italic pb-4">No recent changes recorded.</div>
+              )}
+            </div>
+          </GlowCard>
         </div>
       </section>
 
       {/* Stats Grid */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: t("home.stats.totalCompletions"), value: "100+", icon: Swords, color: "text-[#ec4899]" },
-          { label: t("home.stats.activePlayers"), value: "2,401", icon: Users, color: "text-[#06b6d4]" },
-          { label: t("home.stats.submissions"), value: "45K+", icon: Activity, color: "text-[#a855f7]" },
-          { label: t("home.stats.liveUpdates"), value: "Operational", icon: Zap, color: "text-emerald-400" },
+          { label: t("statistics.totalCompletions"), value: playersLoading ? "..." : players.reduce((sum, p) => sum + p.completedLevels, 0).toLocaleString(), icon: Swords, color: "text-[#ec4899]" },
+          { label: t("statistics.totalPlayers"), value: playersLoading ? "..." : players.length.toLocaleString(), icon: Users, color: "text-[#06b6d4]" },
+          { label: t("statistics.levelsRanked"), value: loading ? "..." : levels.length.toLocaleString(), icon: Activity, color: "text-[#a855f7]" },
+          { label: t("statistics.activeCountries"), value: playersLoading ? "..." : new Set(players.map(p => p.country).filter(c => c && c !== "UN")).size, icon: Zap, color: "text-emerald-400" },
         ].map((stat, i) => (
           <div key={i} className="h-full">
             <GlowCard delay={0.4 + (i * 0.1)} className="!p-5 h-full">

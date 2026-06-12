@@ -1,24 +1,140 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import NodeCache from "node-cache";
-import { parse } from 'csv-parse/sync';
 import { initializeApp, deleteApp } from "firebase/app";
 import { initializeFirestore, collection, getDocs, doc, setDoc } from "firebase/firestore";
+import rateLimit from "express-rate-limit";
+import NodeCache from "node-cache";
+import morgan from "morgan";
+import fs from "fs";
 
 const app = express();
+app.set('trust proxy', 1 /* number of proxies between user and server */);
 const PORT = 3000;
 
-// Simple cache to avoid hitting Google Sheets API too often
-const sheetCache = new NodeCache({ stdTTL: 300 }); // Cache for 5 minutes
+app.use(morgan("dev"));
+app.use(express.static(path.join(process.cwd(), 'public')));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  message: { error: "Too many requests from this IP, please try again later." },
+  validate: { xForwardedForHeader: false, default: true }
+});
+
+app.use("/api", limiter);
+
+const cache = new NodeCache({ stdTTL: 300 }); // 5 minutes cache
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCm61Wj9DOhsEN5GfIoQiOTA5LGiThpeyg",
+  authDomain: "tmg-list.firebaseapp.com",
+  projectId: "tmg-list",
+  storageBucket: "tmg-list.firebasestorage.app",
+  messagingSenderId: "104757774501",
+  appId: "1:104757774501:web:2e7882de0230b4342c254c"
+};
+
+const firebaseApp = initializeApp(firebaseConfig, "server-app");
+const db = initializeFirestore(firebaseApp, {
+  experimentalAutoDetectLongPolling: true,
+}, "(default)");
 
 // API Routes
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
+  try {
+    res.json({ status: "ok" });
+  } catch (error: any) {
+    console.error("Health check error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/api/levels", async (req, res) => {
+  try {
+    const cachedLevels = cache.get("levels");
+    if (cachedLevels) {
+      return res.json(cachedLevels);
+    }
+    
+    const snap = await getDocs(collection(db, "levels"));
+    const levels = snap.docs.map(d => d.data());
+    levels.sort((a, b) => a.rank - b.rank);
+    
+    cache.set("levels", levels);
+    res.json(levels);
+  } catch (error: any) {
+    console.error("Error fetching levels:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/api/changelog", async (req, res) => {
+  try {
+    const cachedLogs = cache.get("changelog");
+    if (cachedLogs) {
+      return res.json(cachedLogs);
+    }
+    
+    const snap = await getDocs(collection(db, "changelog"));
+    const logs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    logs.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    cache.set("changelog", logs);
+    res.json(logs);
+  } catch (error: any) {
+    console.error("Error fetching changelog:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.use(express.json());
+
+// Administrative secret verification middleware
+const checkAdminSecret = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const secret = req.headers["x-admin-secret"] || req.query.secret;
+  const expectedSecret = process.env.ADMIN_API_SECRET;
+  
+  if (!expectedSecret || secret !== expectedSecret) {
+    return res.status(401).json({ error: "Unauthorized: Invalid or missing admin secret" });
+  }
+  next();
+};
+
+app.post("/api/submit-record", async (req, res) => {
+  const { username, levelName, progress, videoProof, userEmail, userId } = req.body;
+
+  const videoRegex = /^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be|twitch\.tv)\/.+$/;
+  if (!videoRegex.test(videoProof)) {
+    return res.status(400).json({ error: "Invalid video URL" });
+  }
+
+  try {
+    const docRef = doc(collection(db, "record_submissions"));
+    await setDoc(docRef, {
+      username,
+      levelName,
+      progress: Number(progress),
+      videoProof,
+      status: "pending",
+      userEmail,
+      userId,
+      createdAt: new Date().toISOString()
+    });
+    res.json({ success: true, id: docRef.id });
+  } catch (error: any) {
+    console.error("Submit record error:", error);
+    res.status(500).json({ error: "Failed to submit record" });
+  }
+});
+
+app.post("/api/clear-cache", checkAdminSecret, (req, res) => {
+  cache.flushAll();
+  res.json({ status: "Cache cleared" });
 });
 
 // Route to migrate old database data to new database
-app.get("/api/migrate", async (req, res) => {
+app.get("/api/migrate", checkAdminSecret, async (req, res) => {
   const oldConfig = {
     apiKey: "AIzaSyAh9oD9otcM2oBaoqHDd88aPMUElaOO0Z4",
     authDomain: "excellent-shape-307pf.firebaseapp.com",
@@ -103,132 +219,91 @@ app.get("/api/migrate", async (req, res) => {
     console.error("Migration failed:", error);
     res.status(500).json({
       status: "error",
-      message: error.message || String(error),
+      error: error.message || String(error),
       stack: error.stack
     });
   }
 });
 
-// Route to fetch levels
-app.get("/api/levels", async (req, res) => {
-  const cacheKey = "levelsList";
-  const cachedData = sheetCache.get(cacheKey);
+async function generateOpenGraphHtml(html: string, url: string) {
+  // Simple check for bot User-Agents
+  // if (!isBot) return html; // We can return normal html for browsers, but actually injecting OG tags for everyone is fine.
   
-  if (cachedData) {
-    return res.json(cachedData);
-  }
-
-  try {
-    const response = await fetch(`https://docs.google.com/spreadsheets/d/1mFj778dlqzh_J1Qy_WJhdaz2XNvqBzDD/export?format=csv&gid=1933116060`);
-    const text = await response.text();
-    const records = parse(text, {
-        columns: true,
-        skip_empty_lines: true
-    });
-    
-    const parsedLevels = records.map((record: any, index: number) => {
-        const rankStr = record[" Number Of List"] || record["Number Of List"];
-        const parsedRank = parseInt(rankStr);
-        const pointsStr = record["Point "] || "0";
-        const pointsMatch = pointsStr.match(/(\d+(\.\d+)?)/);
-        const points = pointsMatch ? parseFloat(pointsMatch[1]) : 0;
-        
-        let victorsCount = 0;
-        const victorsStr = record["Victory(only Extreme)"];
-        if (victorsStr && victorsStr.toLowerCase() !== 'никто') {
-            victorsCount = victorsStr.split(',').length; // very rough estimate
-        }
-
-        const isUnaccounted = record["Неучитываемые"] && record["Неучитываемые"].trim() !== "";
-
-        return {
-            id: `lvl-${rankStr || index}`,
-            rank: isNaN(parsedRank) ? (index + 1) : parsedRank,
-            name: record["Name"] || "Unknown",
-            difficulty: record["Сложность"] || "Extreme Demon",
-            points: points,
-            creator: record["Creator"] || "Unknown",
-            verifier: record["Verifer(top 20)"] || "Unknown",
-            victors: victorsCount,
-            video: "#",
-            isActive: !isUnaccounted
-        };
-    }).filter((l: any) => l.name !== "Unknown" && l.name !== "");
-    
-    sheetCache.set(cacheKey, parsedLevels);
-    res.json(parsedLevels);
-  } catch (error) {
-    console.error("Error fetching levels:", error);
-    res.status(500).json({ error: "Failed to fetch levels data" });
-  }
-});
-
-// Route to fetch players
-app.get("/api/players", async (req, res) => {
-  const cacheKey = "playersList";
-  const cachedData = sheetCache.get(cacheKey);
-  
-  if (cachedData) {
-    return res.json(cachedData);
-  }
-
-  try {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    const usernames = ["Zoink", "Trick", "Doggie", "SpaceUK", "Sunix", "Riot", "Dolphy", "Technical", "npesta", "Cursed"];
-    const countries = ["US", "GB", "RU", "PL", "MX", "DE", "FR", "CA"];
-    
-    const players = [];
-    for (let i = 0; i < usernames.length; i++) {
-      players.push({
-        id: `player-${i + 1}`,
-        rank: i + 1,
-        username: usernames[i],
-        points: Math.round(15000 * Math.pow(0.85, i)),
-        completedLevels: Math.floor(Math.random() * 50) + 20,
-        hardestDemon: i < 3 ? "Tidal Wave" : "Acheron",
-        country: countries[Math.floor(Math.random() * countries.length)],
-      });
+  if (url.startsWith('/level/')) {
+    const levelId = url.split('/')[2];
+    try {
+      const cachedLevels = cache.get("levels") as any[];
+      let level = cachedLevels?.find(l => l.id === levelId);
+      
+      if (!level) {
+        const snap = await getDocs(collection(db, "levels"));
+        const levels = snap.docs.map(d => d.data());
+        cache.set("levels", levels);
+        level = levels.find(l => l.id === levelId);
+      }
+      
+      if (level) {
+        const ogTags = `
+          <title>${level.name} - Demon List</title>
+          <meta property="og:title" content="${level.name} - Demon List" />
+          <meta property="og:description" content="Difficulty: ${level.difficulty} | Creator: ${level.creator} | Verifier: ${level.verifier} | Rank: #${level.rank}" />
+          <meta property="og:type" content="website" />
+          <meta name="twitter:card" content="summary" />
+          <meta name="twitter:title" content="${level.name} - Demon List" />
+          <meta name="twitter:description" content="Difficulty: ${level.difficulty} | Creator: ${level.creator} | Rank: #${level.rank}" />
+        `;
+        return html.replace('</head>', `${ogTags}</head>`);
+      }
+    } catch(e) {
+      console.error("SEO Error:", e);
     }
-    for (let i = usernames.length; i < 50; i++) {
-      players.push({
-        id: `player-${i + 1}`,
-        rank: i + 1,
-        username: `Dasher${i + 1}`,
-        points: Math.round(3000 * Math.pow(0.95, i - usernames.length)),
-        completedLevels: Math.floor(Math.random() * 20) + 5,
-        hardestDemon: "Slaughterhouse",
-        country: countries[Math.floor(Math.random() * countries.length)],
-      });
-    }
-
-    sheetCache.set(cacheKey, players);
-    res.json(players);
-  } catch (error) {
-    console.error("Error fetching players:", error);
-    res.status(500).json({ error: "Failed to fetch players data" });
   }
-});
+  return html;
+}
 
 async function startServer() {
-  // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: "spa",
+      appType: "custom", // Use custom so we can intercept HTML
     });
     app.use(vite.middlewares);
+    
+    app.use('*', async (req, res, next) => {
+      try {
+        let template = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(req.originalUrl, template);
+        const html = await generateOpenGraphHtml(template, req.originalUrl);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      } catch (e: any) {
+        vite.ssrFixStacktrace(e);
+        next(e);
+      }
+    });
+
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    // For Express 4 compatibility
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.use(express.static(distPath, { index: false })); // don't serve index.html automatically
+    app.get('*', async (req, res) => {
+      try {
+        let template = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+        const html = await generateOpenGraphHtml(template, req.originalUrl);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      } catch (e) {
+        res.status(500).end(e);
+      }
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  if (process.env.NODE_ENV !== "test") {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 }
 
-startServer();
+if (process.env.NODE_ENV !== "test") {
+  startServer();
+}
+
+export default app;

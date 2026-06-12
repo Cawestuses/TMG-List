@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { GlowCard } from "../components/ui/GlowCard";
-import { getYouTubeEmbedUrl } from "../lib/utils";
+import { getVideoEmbedUrl } from "../lib/utils";
 import type { Level, RecordSubmission } from "../types";
 import { Play, Calendar, User, ShieldCheck, Trophy, Video } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -89,8 +89,8 @@ export default function LevelDetails() {
               {level.video ? (
                 <iframe
                   className="w-full h-full absolute inset-0"
-                  src={getYouTubeEmbedUrl(level.video)}
-                  title="YouTube video player"
+                  src={getVideoEmbedUrl(level.video)}
+                  title="Video player"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   referrerPolicy="strict-origin-when-cross-origin"

@@ -5,16 +5,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function getYouTubeEmbedUrl(url: string) {
+export function getVideoEmbedUrl(url: string) {
   if (!url) return '';
-  let videoId = '';
   try {
     const p = new URL(url);
     if (p.hostname === 'youtu.be') {
-      videoId = p.pathname.slice(1);
+      const videoId = p.pathname.slice(1);
+      return `https://www.youtube.com/embed/${videoId}?autoplay=0`;
     } else if (p.hostname.includes('youtube.com')) {
-      videoId = p.searchParams.get('v') || '';
+      const videoId = p.searchParams.get('v');
+      if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=0`;
+    } else if (p.hostname.includes('twitch.tv')) {
+      const parts = p.pathname.split('/').filter(Boolean);
+      if (parts[0] === 'videos' && parts[1]) {
+        return `https://player.twitch.tv/?video=${parts[1]}&parent=${window.location.hostname}&autoplay=false`;
+      } else if (parts[0]) {
+        return `https://player.twitch.tv/?channel=${parts[0]}&parent=${window.location.hostname}&autoplay=false`;
+      }
     }
   } catch(e) {}
-  return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  return '';
 }

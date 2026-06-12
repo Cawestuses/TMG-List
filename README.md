@@ -1,61 +1,134 @@
-# Obsidian List
+# Obsidian List — Geometry Dash Demon List
 
-A modern, fast, and highly animated Geometry Dash Demon List clone, inspired by Pointercrate and Demonlist.org, built with Vite, React, Express, TailwindCSS, and Framer Motion.
+Современный, производительный и визуально безупречный клон **Geometry Dash Demon List** (вдохновленный проектами Pointercrate и Demonlist.org). Приложение спроектировано по принципу архитектуры **Fullstack SPA** с использованием передовых технологий веб-разработки: **React 19**, **Vite**, **Tailwind CSS v4**, **Node.js (Express)**, **Firebase Suite (Firestore & Auth)** и отказоустойчивой системы тестирования **Vitest**.
 
-## 🚀 Features
-- **Responsive & Modern UI**: Gaming-themed, dark mode by default with glassmorphism and glowing accents.
-- **Top Levels Leaderboard**: Browse the hardest Geometry Dash completions.
-- **Animations**: Driven by `framer-motion` for smooth layout transitions and hover effects.
-- **Server API**: Express backend handles data fetching efficiently.
-- **Google Sheets Integration (Stubbed)**: Ready to connect to live Google Sheets data to act as a free real-time database.
+---
 
-## 🛠️ Tech Stack
-- Frontend: React 19, Vite, Tailwind CSS 4, Framer Motion, React Router DOM
-- Backend: Express, Node-Cache (for caching Google Sheets responses)
-- Deployment: Docker / Cloud Run ready (Start with `npm run start`)
+## 🚀 Фичи и Функциональность
 
-## 📊 Connecting Google Sheets
+### 1. Интерактивный список уровней (Demon List)
+* **Динамический топ**: Отображение сложнейших уровней (Demons) с автоматической сортировкой по рангу (сложности).
+* **Фильтрация и поиск**: Удобный поиск и фильтрация по названию, верификатору или создателю со мгновенным откликом интерфейса.
+* **Детальная карточка уровня**: Страница каждого уровня включает встроенный плеер верификации (YouTube), подробную техническую информацию, список рекордсменов с процентом прохождения и ссылку на скачивание или видео-доказательство.
 
-This project is built to accept data directly from Google Sheets. To connect it, follow these steps:
+### 2. Профили игроков и Система рекордов
+* **Индивидуальная статистика**: Общий балл игрока на основе пройденных демонов (Score System), список подтвержденных рекордов и страна/флаг.
+* **Форма отправки рекордов (Submit Record)**:
+  * Полностью переработана: теперь работает **напрямую и без капчи**, обеспечивая пользователям мгновенную подачу заявки без лишних преград.
+  * Интеллектуальная валидация видео-доказательств: строгие серверные правила проверки регулярных выражений (поддерживаются форматы `YouTube`, `Twitch`, `youtu.be` и шортсы) для исключения фишинга и вредоносных ссылок.
+  * Интеграция автоматического сопоставления с базой активных уровней.
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/) and create a project.
-2. Enable the **Google Sheets API**.
-3. Generate an API Key in Credentials.
-4. Copy the key and place it in your environment variables (`.env`):
-   ```env
-   GOOGLE_SHEETS_API_KEY="your-api-key-here"
-   ```
-5. Edit `server.ts` to use your spreadsheet ID and uncomment the real fetch logic:
-   ```typescript
-   // In server.ts, inside app.get("/api/levels")
-   const SHEET_ID = "1mFj778dlqzh_J1Qy_WJhdaz2XNvqBzDD"; // Provided ID
-   const RANGE = "Sheet1!A2:J"; // Adjust to your sheet's data range
-   
-   const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${process.env.GOOGLE_SHEETS_API_KEY}`);
-   const data = await response.json();
-   
-   // Map the rows to the Level types
-   const parsedLevels = data.values.map(row => ({
-       id: row[0],
-       rank: Number(row[1]),
-       name: row[2],
-       difficulty: row[3],
-       // ... etc.
-   }));
-   ```
+### 3. Панель Администратора (Admin Dashboard)
+* **Управление контентом**: Модерация поданных заявок на рекорды в реальном времени.
+* **Управление базой**: Возможность добавлять новые уровни, перемещать их в списке (с пересчетом рангов) и модерировать списки игроков.
+* **Административное API и Безопасность**:
+  * Защита критических эндпоинтов авторизационным токеном `x-admin-secret` (передается через заголовки или query-параметры).
+  * Функция мгновенного сброса кэша (`POST /api/clear-cache`) для оперативной синхронизации обновленных в админке данных.
 
-## 🏗️ Getting Started
+### 4. Продвинутые микро-утилиты локализации и даты
+* **Флаги стран (`getFlagEmoji`)**: Кастомный парсер, преобразующий ISO 2-letter коды в красивые флаги-эмодзи, с дефолтным фолбеком на глобус для нераспознанных регионов.
+* **Привязка к таймзонам (`getCapitalNameAndTz`)**: Точное определение столицы и IANA таймзоны для каждого региона.
+* **Аналитическое время изменений (`formatChangelogTime`)**: Форматирование временных меток в логах изменений с учетом локального времени соответствующего региона.
 
+---
+
+## 🛠️ Технологический Стек
+
+### Фронтенд
+* **ID & UI-платформа**: [React 19](https://react.dev/) — реактивная отрисовка данных с оптимизированным деревом рендеринга.
+* **Сборщик**: [Vite](https://vite.dev/) — сверхбыстрый инструмент сборки и сервер разработки.
+* **Стилизация**: [Tailwind CSS v4](https://tailwindcss.com/) — использование передовых директив темы, CSS-переменных и полного отсутствия громоздких препроцессоров.
+* **Анимации**: [Framer Motion](https://www.framer.com/motion/) — плавные переходы между страницами, микро-интеракции элементов и анимированные списки.
+* **Архитектурное решение**: Разделение деструктурированных UI-блоков, кастомные хуки (`useLevels`, `usePlayers`) для изоляции побочных эффектов.
+
+### Бэкенд
+* **Сервер**: [Express](https://expressjs.com/) (Node.js) — обслуживание API-маршрутизации и статических ресурсов в Production.
+* **База данных**: [Firebase Firestore](https://firebase.google.com/docs/firestore) — гибкая NoSQL база данных реального времени.
+* **Кэширование**: Оптимизированное хранение часто запрашиваемых агрегаций уровней для снижения нагрузки по квотам Firestore.
+* **Сборка Backend**: Использование `esbuild` для компиляции TypeScript-сервера в единый независимый CommonJS бандл `dist/server.cjs`. Это решает проблемы относительных путей в ES-модулях Node и значительно ускоряет холодный старт контейнера.
+
+### Тестирование (QA & Security)
+* **Фреймворк**: [Vitest](https://vitest.dev/) — сверхбыстрый тест-раннер нового поколения, нацеленный на глубокую интеграцию с Vite.
+* **Интеграционные тесты API**: [Supertest](https://github.com/ladjs/supertest) — тестирование Express роутов, обработчиков ошибок (400, 401, 500) и валидации форм.
+* **Мокирование**: 100% изоляция тестов от внешней базы данных Firebase при помощи модульных заглушек (`vi.mock`).
+
+---
+
+## 🐳 CI/CD, Докеризация и Деплой
+
+Приложение подготовлено для развертывания в масштабируемых контейнерах (например, **Docker + Google Cloud Run**).
+
+### 1. Многоэтапная Docker-сборка (Multi-stage Build)
+Файл `Dockerfile` оптимизирован для сборки ультра-легковесных образов без лишних зависимостей этапа разработки:
+1. **Этап сборки (`builder`)**: Устанавливает полные зависимости, транслирует TS-код, собирает SPA-дистрибутив и компилирует бэкенд через `npm run build`.
+2. **Этап запуска (`runner`)**: Берет за основу чистый образ `node:20-alpine`, копирует только директорию `/dist`, файл `package.json` и устанавливает строго `--only=production` зависимости. Для безопасности контейнер работает под непривилегированным пользователем `node`.
+
+### 2. Непрерывная интеграция (GitHub Actions CI)
+В репозитории настроен автоматический конвейер проверки кода `.github/workflows/ci.yml`. При каждом коммите и пул-реквесте в ветку `main` запускаются следующие этапы:
+1. Кэширование папки `node_modules` для ускорения последующих сборок.
+2. Проверка стиля кода и синтаксических ошибок (`npm run lint`).
+3. Строгий контроль типов компилятора TypeScript (`npx tsc --noEmit`).
+4. Компиляция production-версии проекта (`npm run build`).
+5. Запуск полного пакета Unit и интеграционных тестов с проверкой покрытия (`npx vitest run --coverage`).
+
+---
+
+## ⚙️ Переменные окружения (Environment Variables)
+
+Для полноценной работы приложения в Production-среде необходимо передать в контейнер следующие переменные окружения:
+
+```env
+# Режим окружения и сетевой порт (контейнер по умолчанию слушает 3000)
+NODE_ENV=production
+PORT=3000
+
+# Firebase конфигурация (для подключения к вашему проекту Firestore/Auth)
+FIREBASE_API_KEY="your-firebase-api-key"
+FIREBASE_AUTH_DOMAIN="your-app.firebaseapp.com"
+FIREBASE_PROJECT_ID="your-app-project-id"
+FIREBASE_STORAGE_BUCKET="your-app.appspot.com"
+FIREBASE_MESSAGING_SENDER_ID="your-sender-id"
+FIREBASE_APP_ID="your-app-id"
+
+# Секрет администрирования (используется для подписи очистки кэша и импорта данных)
+ADMIN_API_SECRET="your-super-secure-unique-admin-secret"
+```
+
+---
+
+## 🏃‍♂️ Как запустить локально
+
+### Установка зависимостей
 ```bash
-# Install dependencies
 npm install
+```
 
-# Start the fullstack development server (Frontend + Backend)
+### Запуск в режиме разработки (Frontend + Backend)
+```bash
 npm run dev
+```
+Фронтенд будет доступен по адресу `http://localhost:3000/`. Запросы к `/api/*` автоматически проксируются локальным Express сервером.
 
-# Build for production
+### Запуск тестов
+```bash
+# Одиночный запуск тестов
+npx vitest run
+
+# Запуск тестов во Watch-режиме
+npx vitest
+
+# Запуск тестов со сбором покрытия (Coverage Report)
+npx vitest run --coverage
+```
+
+### Компиляция в Production-билд
+```bash
 npm run build
+```
+Скомпилированные статические файлы фронтенда и собранный сервер будут находиться в директории `dist/`.
 
-# Start production server
+### Локальный запуск Prod-версии
+```bash
+# Запуск скомпилированного бандла
 npm run start
 ```

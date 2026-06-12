@@ -6,6 +6,7 @@ import { GlowCard } from "../components/ui/GlowCard";
 import type { Player } from "../types";
 import { useTranslation } from "react-i18next";
 import { usePlayers } from "../hooks/usePlayers";
+import { getFlagEmoji } from "../utils/country";
 
 export default function Players() {
   const { players, loading: levelsLoading } = usePlayers();
@@ -29,7 +30,7 @@ export default function Players() {
                             (p.country || "").toLowerCase().includes(search.toLowerCase());
       // Tab filter
       if (activeTab === "creators") {
-        return matchesSearch && p.createdLevels > 0;
+        return matchesSearch && p.createdLevels > 0 && (p.username || "").trim().toLowerCase() !== "tmgarchive";
       }
       return matchesSearch; // Slayers tab shows all logically
     })
@@ -220,7 +221,7 @@ export default function Players() {
                               ))}
                             </div>
                             <div className="text-[10px] text-white/40 uppercase font-semibold mt-1 tracking-wider flex items-center gap-1">
-                              <Globe className="w-3 h-3" /> {player.country}
+                              <Globe className="w-3 h-3" /> {getFlagEmoji(player.country)} {player.country === "UN" ? "Unknown" : player.country}
                             </div>
                           </div>
                         </div>

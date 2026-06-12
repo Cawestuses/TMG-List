@@ -29,11 +29,11 @@ export default function Statistics() {
   const uniqueCountries = new Set(players.map(p => p.country)).size;
 
   const pointsData = [
-    { name: '0-1k', count: players.filter(p => p.points <= 1000).length },
-    { name: '1k-3k', count: players.filter(p => p.points > 1000 && p.points <= 3000).length },
-    { name: '3k-5k', count: players.filter(p => p.points > 3000 && p.points <= 5000).length },
-    { name: '5k-10k', count: players.filter(p => p.points > 5000 && p.points <= 10000).length },
-    { name: '10k+', count: players.filter(p => p.points > 10000).length },
+    { name: '0-15', count: players.filter(p => p.points >= 0 && p.points <= 15).length },
+    { name: '15-30', count: players.filter(p => p.points > 15 && p.points <= 30).length },
+    { name: '30-45', count: players.filter(p => p.points > 30 && p.points <= 45).length },
+    { name: '45-60', count: players.filter(p => p.points > 45 && p.points <= 60).length },
+    { name: '60+', count: players.filter(p => p.points > 60).length },
   ];
 
   const CustomTooltip = ({ active, payload, label }: any) => {

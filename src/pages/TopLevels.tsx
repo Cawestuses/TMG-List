@@ -61,9 +61,7 @@ export default function TopLevels() {
               className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-purple-500/50 transition-all backdrop-blur-sm text-slate-100 placeholder-white/30"
             />
           </div>
-          <button className="p-3 border border-white/10 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white backdrop-blur-sm">
-            <Filter className="w-5 h-5" />
-          </button>
+
         </div>
       </div>
 

@@ -54,6 +54,7 @@ export interface Player {
   hardestProgressId?: string;
   hardestProgressPercent?: number;
   completedLevelsList: { name: string; progress: number, url: string, id: string }[];
+  progressLevelsList: { name: string; progress: number, url: string, id: string }[];
   createdLevelsList: { name: string, id: string }[];
 }
 
@@ -63,5 +64,12 @@ export interface UserProfile {
   gdUsername?: string;
   description?: string;
   country?: string;
+}
+
+export interface ChangelogItem {
+  id: string;
+  date: string;
+  content: string;
+  levelId?: string;
 }
 

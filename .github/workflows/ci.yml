@@ -1,0 +1,40 @@
+name: "Geometry Dash Demon List - Fullstack CI Pipeline"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout Repository Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install Dependencies securely
+        run: npm ci
+
+      - name: Validate Codebase Linting Rules
+        run: npm run lint
+
+      - name: Perform Hard-line TypeScript Type-check
+        run: npx tsc --noEmit
+
+      - name: Verify Application Production Build compiles
+        run: npm run build
+
+      - name: Execute Vitest Integration Suit with Code Coverage check
+        run: npx vitest run --coverage

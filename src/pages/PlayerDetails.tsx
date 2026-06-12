@@ -7,12 +7,13 @@ import { usePlayers } from "../hooks/usePlayers";
 import { useAuth } from "../lib/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { getFlagEmoji } from "../utils/country";
 
 export default function PlayerDetails() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") === "creator" ? "creator" : "slayer";
-  const [activeTab, setActiveTab] = useState<"slayer" | "creator">(initialTab);
+  const initialTab = (searchParams.get("tab") === "creator" || searchParams.get("tab") === "progress") ? (searchParams.get("tab") as "creator" | "progress") : "slayer";
+  const [activeTab, setActiveTab] = useState<"slayer" | "creator" | "progress">(initialTab);
   
   const { players, loading } = usePlayers();
   const { user, isAdmin } = useAuth();
@@ -38,6 +39,7 @@ export default function PlayerDetails() {
        country: "UN",
        roles: [],
        completedLevelsList: [],
+       progressLevelsList: [],
        createdLevelsList: []
      };
   }
@@ -135,7 +137,7 @@ export default function PlayerDetails() {
                     <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 mt-3 text-white/50 text-sm font-medium">
                         {(displayedProfile.country) && (
                            <span className="flex items-center gap-1.5 text-white/70">
-                             <Globe className="w-4 h-4 text-white/40" /> {isEditing ? "Country:" : displayedProfile.country} 
+                             <Globe className="w-4 h-4 text-white/40" /> {getFlagEmoji(displayedProfile.country)} {isEditing ? "Country:" : (displayedProfile.country === "UN" ? "Unknown" : displayedProfile.country)} 
                            </span>
                         )}
                         {(!isEditing && displayedProfile.discord) && (
@@ -233,6 +235,16 @@ export default function PlayerDetails() {
         >
           <Code className="w-4 h-4" /> Creator Statistics
         </button>
+        <button 
+          onClick={() => setActiveTab("progress")}
+          className={`px-6 py-3 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
+            activeTab === "progress" 
+              ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" 
+              : "text-zinc-400 hover:text-white bg-white/5 border border-transparent"
+          }`}
+        >
+          <Target className="w-4 h-4" /> All Progresses
+        </button>
       </div>
 
       {/* Info Grid */}
@@ -241,7 +253,7 @@ export default function PlayerDetails() {
           <GlowCard glowColor="secondary">
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-4 flex items-center gap-2">
               <Sword className="w-4 h-4" /> 
-              {activeTab === "slayer" ? "Completed Levels" : "Created Levels"}
+              {activeTab === "slayer" ? "Completed Levels" : activeTab === "creator" ? "Created Levels" : "Progresses"}
             </h3>
             <div className="space-y-2">
                  {activeTab === "slayer" && player.completedLevelsList?.length > 0 && player.completedLevelsList.map((level, i) => (
@@ -265,6 +277,29 @@ export default function PlayerDetails() {
                  
                  {activeTab === "slayer" && (!player.completedLevelsList || player.completedLevelsList.length === 0) && (
                    <div className="p-8 text-center text-white/40 italic">No levels completed yet.</div>
+                 )}
+
+                 {activeTab === "progress" && player.progressLevelsList?.length > 0 && player.progressLevelsList.map((level, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                        <div className="flex items-center gap-4">
+                            <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center border border-white/10 text-white/40">
+                              <Target className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <Link to={`/level/${level.id}`} className="font-bold text-white/90 hover:text-cyan-400 transition-colors text-sm md:text-base">{level.name}</Link>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                             <div className="text-sm font-bold text-cyan-400">{level.progress}%</div>
+                             {level.url && (
+                               <a href={level.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/40 hover:text-blue-400 uppercase font-bold tracking-wider mt-1 block">Proof</a>
+                             )}
+                        </div>
+                    </div>
+                 ))}
+                 
+                 {activeTab === "progress" && (!player.progressLevelsList || player.progressLevelsList.length === 0) && (
+                   <div className="p-8 text-center text-white/40 italic">No progress recorded yet.</div>
                  )}
 
                  {activeTab === "creator" && player.createdLevelsList?.length > 0 && player.createdLevelsList.map((level, i) => (
@@ -331,25 +366,6 @@ export default function PlayerDetails() {
                          </div>
                     </div>
                   ) : null}
-
-                   <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
-                       <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
-                           <Medal className="w-5 h-5" />
-                       </div>
-                       <div>
-                           <div className="text-[10px] font-bold text-white/40 uppercase">Total Points</div>
-                           <div className="text-xl font-bold mt-0.5">{player.points.toLocaleString()}</div>
-                       </div>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
-                       <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
-                           <Check className="w-5 h-5" />
-                       </div>
-                       <div>
-                           <div className="text-[10px] font-bold text-white/40 uppercase">Verified Levels</div>
-                           <div className="text-xl font-bold mt-0.5">{player.verifiedLevels || 0}</div>
-                       </div>
-                  </div>
                 </>
               )}
 

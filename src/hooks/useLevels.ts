@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { Level } from "../types";
-import { collection, query, orderBy, onSnapshot, getDocs } from "firebase/firestore";
-import { db } from "../lib/firebase";
 
 // Global cache for client side
 let cachedLevels: Level[] | null = null;
@@ -28,16 +26,17 @@ export function useLevels() {
 
     if (!isFetching) {
       isFetching = true;
-      getDocs(collection(db, "levels")).then(snap => {
-        const data = snap.docs.map(doc => doc.data() as Level);
-        data.sort((a, b) => a.rank - b.rank);
-        cachedLevels = data;
-        subscribers.forEach(sub => sub(data));
-        isFetching = false;
-      }).catch(err => {
-        console.error(err);
-        isFetching = false;
-      });
+      fetch("/api/levels")
+        .then(res => res.json())
+        .then((data: Level[]) => {
+          data.sort((a, b) => a.rank - b.rank);
+          cachedLevels = data;
+          subscribers.forEach(sub => sub(data));
+          isFetching = false;
+        }).catch(err => {
+          console.error(err);
+          isFetching = false;
+        });
     }
 
     return () => {

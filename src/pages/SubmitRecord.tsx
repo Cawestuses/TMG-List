@@ -16,6 +16,8 @@ export default function SubmitRecord() {
   const [videoProof, setVideoProof] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const videoRegex = /^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be|twitch\.tv)\/.+$/;
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
@@ -29,29 +31,41 @@ export default function SubmitRecord() {
       return;
     }
 
+    if (!videoRegex.test(videoProof)) {
+      alert("Please enter a valid YouTube or Twitch URL.");
+      return;
+    }
+
     setIsSubmitting(true);
     
     const username = user.email ? user.email.split('@')[0] : "Player";
     
     try {
-      await addDoc(collection(db, "record_submissions"), {
-        username,
-        levelName,
-        progress: Number(progress),
-        videoProof,
-        status: "pending",
-        userEmail: user.email,
-        userId: user.uid,
-        createdAt: new Date().toISOString()
+      const res = await fetch("/api/submit-record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          levelName,
+          progress: Number(progress),
+          videoProof,
+          userEmail: user.email,
+          userId: user.uid
+        })
       });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to submit");
+      }
       
       alert(t("submit.success", "Record submitted successfully!"));
       setLevelName("");
       setProgress("");
       setVideoProof("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting record:", error);
-      alert(t("submit.error", "Failed to submit record. Please try again."));
+      alert(error.message || t("submit.error", "Failed to submit record. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -89,10 +103,11 @@ export default function SubmitRecord() {
             <select 
               value={levelName}
               onChange={(e) => setLevelName(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500/50 transition-all backdrop-blur-sm font-mono text-sm appearance-none" 
+              className="w-full bg-[#121214] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500/50 transition-all backdrop-blur-sm font-sans text-sm appearance-none" 
               disabled={isSubmitting}
+              required
             >
-              <option value="" disabled className="text-black bg-zinc-800">{t("submit.levelNamePlaceholder") || "Select a level..."}</option>
+              <option value="" className="text-zinc-500 bg-zinc-800"></option>
               {levels.map(level => (
                 <option key={level.id} value={level.name} className="text-black bg-white">{level.name}</option>
               ))}

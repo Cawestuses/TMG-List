@@ -17,6 +17,10 @@ export default function AuthPage() {
   const [authError, setAuthError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [countryCode, setCountryCode] = useState("RU");
+  const [discordTag, setDiscordTag] = useState("");
+  const [gdUsernameField, setGdUsernameField] = useState("");
+
   if (loading) {
     return <div className="min-h-[50vh] flex items-center justify-center">Loading...</div>;
   }
@@ -68,28 +72,32 @@ export default function AuthPage() {
 
         await registerWithEmail(emailToUse, password);
 
+        // Find original case of name for redirection
+        let targetUsername = username;
+        const matchingCreator = levels.find(l => (l.creator || "").trim().toLowerCase() === normalizedUsername);
+        const matchingVerifier = levels.find(l => (l.verifier || "").trim().toLowerCase() === normalizedUsername);
+        const matchingSlayer = submissions.find(s => s.status === "accepted" && (s.username || "").trim().toLowerCase() === normalizedUsername);
+
+        if (matchingVerifier && matchingVerifier.verifier) {
+          targetUsername = matchingVerifier.verifier;
+        } else if (matchingCreator && matchingCreator.creator) {
+          targetUsername = matchingCreator.creator;
+        } else if (matchingSlayer && matchingSlayer.username) {
+          targetUsername = matchingSlayer.username;
+        }
+
+        // Set or update the user_profiles document with all details
+        await setDoc(doc(db, "user_profiles", normalizedUsername), {
+          claimed: true,
+          claimedBy: emailToUse,
+          claimedAt: new Date().toISOString(),
+          country: countryCode,
+          discord: discordTag || "",
+          gdUsername: gdUsernameField || "",
+          username: targetUsername
+        }, { merge: true });
+
         if (isPlayer && !alreadyClaimed) {
-          // Find original case of name for redirection
-          let targetUsername = username;
-          const matchingCreator = levels.find(l => (l.creator || "").trim().toLowerCase() === normalizedUsername);
-          const matchingVerifier = levels.find(l => (l.verifier || "").trim().toLowerCase() === normalizedUsername);
-          const matchingSlayer = submissions.find(s => s.status === "accepted" && (s.username || "").trim().toLowerCase() === normalizedUsername);
-
-          if (matchingVerifier && matchingVerifier.verifier) {
-            targetUsername = matchingVerifier.verifier;
-          } else if (matchingCreator && matchingCreator.creator) {
-            targetUsername = matchingCreator.creator;
-          } else if (matchingSlayer && matchingSlayer.username) {
-            targetUsername = matchingSlayer.username;
-          }
-
-          // Claim the profile
-          await setDoc(doc(db, "user_profiles", normalizedUsername), {
-            claimed: true,
-            claimedBy: emailToUse,
-            claimedAt: new Date().toISOString()
-          }, { merge: true });
-          
           navigate(`/player/${encodeURIComponent(targetUsername)}`);
         } else {
           navigate("/");
@@ -144,6 +152,57 @@ export default function AuthPage() {
               minLength={6}
             />
           </div>
+
+          {!isLogin && (
+            <>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                  Country
+                </label>
+                <select
+                  value={countryCode}
+                  onChange={e => setCountryCode(e.target.value)}
+                  className="w-full bg-[#121214] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500/50 transition-all font-sans text-sm"
+                >
+                  <option value="RU" className="text-black bg-white">🇷🇺 Russia (Россия)</option>
+                  <option value="US" className="text-black bg-white">🇺🇸 United States</option>
+                  <option value="UA" className="text-black bg-white">🇺🇦 Ukraine (Украина)</option>
+                  <option value="BY" className="text-black bg-white">🇧🇾 Belarus (Беларусь)</option>
+                  <option value="KZ" className="text-black bg-white">🇰🇿 Kazakhstan (Казахстан)</option>
+                  <option value="DE" className="text-black bg-white">🇩🇪 Germany</option>
+                  <option value="FR" className="text-black bg-white">🇫🇷 France</option>
+                  <option value="GB" className="text-black bg-white">🇬🇧 United Kingdom</option>
+                  <option value="CA" className="text-black bg-white">🇨🇦 Canada</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest text-[#5865F2]">
+                  Discord Username (Optional)
+                </label>
+                <input 
+                  type="text" 
+                  value={discordTag}
+                  onChange={e => setDiscordTag(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500/50 transition-all font-sans text-sm" 
+                  placeholder="e.g. user_discord" 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest text-orange-400">
+                  Geometry Dash Username (Optional)
+                </label>
+                <input 
+                  type="text" 
+                  value={gdUsernameField}
+                  onChange={e => setGdUsernameField(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500/50 transition-all font-sans text-sm" 
+                  placeholder="e.g. MyGDName" 
+                />
+              </div>
+            </>
+          )}
 
           {authError && (
             <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-red-500 text-sm">

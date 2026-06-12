@@ -32,16 +32,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkIsAdmin = (email: string | null) => {
     if (!email) return false;
-    const expectedAdminEmail = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
-    const alternateAdminEmail = 'Infinity_starmaizik@obsidian.local';
-    const alternateAdminEmail2 = 'admin@obsidian.local';
-    const alternateAdminEmail3 = 'markleonov2010@gmail.com';
+    const expectedAdminEmail = (import.meta.env.VITE_ADMIN_USERNAME || 'admin').toLowerCase();
+    const normalizedEmail = email.trim().toLowerCase();
     
-    return email === expectedAdminEmail || 
-           email === `${expectedAdminEmail}@obsidian.local` || 
-           email === alternateAdminEmail || 
-           email === alternateAdminEmail2 ||
-           email === alternateAdminEmail3;
+    return normalizedEmail === expectedAdminEmail || 
+           normalizedEmail === `${expectedAdminEmail}@obsidian.local` || 
+           normalizedEmail === 'infinify_starmaizik' || 
+           normalizedEmail === 'infinify_starmaizik@obsidian.local' || 
+           normalizedEmail === 'infinity_starmaizik' || 
+           normalizedEmail === 'infinity_starmaizik@obsidian.local' || 
+           normalizedEmail === 'admin@obsidian.local' || 
+           normalizedEmail === 'admin' ||
+           normalizedEmail === 'markleonov2010@gmail.com';
   };
 
   useEffect(() => {

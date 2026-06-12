@@ -16,6 +16,7 @@ interface PlayerStat {
   hardestProgressStr: string;
   hardestProgressId: string;
   completedLevelsList: { name: string; progress: number, url: string, id: string }[];
+  progressLevelsList: { name: string; progress: number, url: string, id: string }[];
   createdLevelsList: { name: string, id: string }[];
   roles: string[];
 }
@@ -70,6 +71,7 @@ export function usePlayers() {
           hardestProgressStr: "",
           hardestProgressId: "",
           completedLevelsList: [],
+          progressLevelsList: [],
           createdLevelsList: [],
           roles: []
         };
@@ -127,6 +129,10 @@ export function usePlayers() {
           
           // Progress check
           if (sub.progress < 100) {
+            if (!pStat.progressLevelsList.find(c => (c.name || "").toLowerCase() === (sub.levelName || "").toLowerCase() && c.progress === sub.progress)) {
+              pStat.progressLevelsList.push({ name: level.name, progress: sub.progress, url: sub.videoProof, id: level.id });
+            }
+            
             const currentHardestProgLevel = levels.find(l => l.name === pStat.hardestProgressStr);
             const currentRank = currentHardestProgLevel ? currentHardestProgLevel.rank : Infinity;
             
@@ -159,8 +165,8 @@ export function usePlayers() {
       if (stat.createdLevels > 3) roles.push("Хостер");
       
       // Admin check - either by exact name or env variable
-      const expectedAdmin = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
-      if (key === expectedAdmin.toLowerCase()) roles.push("Админ");
+      const expectedAdmin = (import.meta.env.VITE_ADMIN_USERNAME || 'admin').toLowerCase();
+      if (key === expectedAdmin || key === "infinify_starmaizik" || key === "infinity_starmaizik") roles.push("Админ");
 
       const profile = profiles[key] || {};
 
@@ -183,6 +189,7 @@ export function usePlayers() {
         hardestProgressId: stat.hardestProgressId,
         hardestProgressPercent: stat.hardestProgressPercent,
         completedLevelsList: stat.completedLevelsList.sort((a,b) => (b.progress || 0) - (a.progress || 0)), // you can sort by rank if wanted
+        progressLevelsList: stat.progressLevelsList.sort((a,b) => (b.progress || 0) - (a.progress || 0)),
         createdLevelsList: stat.createdLevelsList
       };
     });

@@ -4,19 +4,22 @@ import { Footer } from "../components/layout/Footer";
 import { useAuth } from "../lib/auth";
 import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { Level, Verifier, FutureLevel, RecordSubmission } from "../types";
+import { Level, Verifier, FutureLevel, RecordSubmission, ChangelogItem } from "../types";
 import { Navigate, Link } from "react-router-dom";
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "submissions" | "users">("levels");
+  const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "submissions" | "users" | "changelog">("levels");
+  
+  const [changelogs, setChangelogs] = useState<ChangelogItem[]>([]);
+  const [isEditingChangelog, setIsEditingChangelog] = useState<ChangelogItem | null>(null);
+  const [changelogToDelete, setChangelogToDelete] = useState<string | null>(null);
   
   const [levels, setLevels] = useState<Level[]>([]);
   const [submissions, setSubmissions] = useState<RecordSubmission[]>([]);
   const [submissionToDelete, setSubmissionToDelete] = useState<string | null>(null);
   const [isEditingLevel, setIsEditingLevel] = useState<Level | null>(null);
   const [levelToDelete, setLevelToDelete] = useState<string | null>(null);
-  const [syncLoading, setSyncLoading] = useState(false);
 
   const [verifiers, setVerifiers] = useState<Verifier[]>([]);
   const [isEditingVerifier, setIsEditingVerifier] = useState<Verifier | null>(null);
@@ -43,8 +46,15 @@ export default function AdminDashboard() {
       loadVerifiers();
       loadFutureLevels();
       loadSubmissions();
+      loadChangelogs();
     }
   }, [isAdmin]);
+
+  const loadChangelogs = async () => {
+    const snap = await getDocs(collection(db, "changelog"));
+    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as ChangelogItem);
+    setChangelogs(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  };
 
   const loadSubmissions = async () => {
     const snap = await getDocs(collection(db, "record_submissions"));
@@ -68,22 +78,6 @@ export default function AdminDashboard() {
     const snap = await getDocs(collection(db, "future_levels"));
     const data = snap.docs.map(doc => doc.data() as FutureLevel);
     setFutureLevels(data);
-  };
-
-  const handleSyncWithGoogleSheets = async () => {
-    setSyncLoading(true);
-    try {
-      const res = await fetch("/api/levels");
-      const sheetLevels: Level[] = await res.json();
-      for (const level of sheetLevels) {
-        await setDoc(doc(db, "levels", level.id), level);
-      }
-      await loadLevels();
-      alert("Synced successfully from Google Sheets!");
-    } catch (e) {
-      alert("Failed to sync: " + e);
-    }
-    setSyncLoading(false);
   };
 
   const handleMigrateOldDatabase = async () => {
@@ -161,6 +155,41 @@ export default function AdminDashboard() {
   const handleAcceptSubmission = async (id: string) => {
     await updateDoc(doc(db, "record_submissions", id), { status: "accepted" });
     await loadSubmissions();
+  };
+
+  const handleRejectSubmission = async (id: string) => {
+    await updateDoc(doc(db, "record_submissions", id), { status: "rejected" });
+    await loadSubmissions();
+  };
+
+  const handleDeleteChangelog = (id: string) => {
+    setChangelogToDelete(id);
+  };
+
+  const confirmDeleteChangelog = async () => {
+    if (changelogToDelete) {
+      await deleteDoc(doc(db, "changelog", changelogToDelete));
+      setChangelogToDelete(null);
+      await loadChangelogs();
+      fetch('/api/clear-cache', { method: 'POST' });
+    }
+  };
+
+  const saveChangelog = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!isEditingChangelog) return;
+    try {
+      await setDoc(doc(db, "changelog", isEditingChangelog.id || `log-${Date.now()}`), {
+        date: isEditingChangelog.date || new Date().toISOString(),
+        content: isEditingChangelog.content
+      });
+      setIsEditingChangelog(null);
+      await loadChangelogs();
+      fetch('/api/clear-cache', { method: 'POST' });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save changelog.");
+    }
   };
 
   const saveLevel = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -356,6 +385,12 @@ export default function AdminDashboard() {
         >
           Users
         </button>
+        <button 
+          onClick={() => setActiveTab("changelog")}
+          className={`px-4 py-2 font-bold transition-colors ${activeTab === "changelog" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+        >
+          Changelog
+        </button>
       </div>
 
       {activeTab === "levels" && (
@@ -374,13 +409,6 @@ export default function AdminDashboard() {
               className="px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg text-sm font-bold uppercase"
             >
               Import JSON
-            </button>
-            <button 
-              onClick={handleSyncWithGoogleSheets} 
-              disabled={syncLoading}
-              className="px-4 py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg text-sm font-bold uppercase disabled:opacity-50"
-            >
-              {syncLoading ? "Syncing..." : "Sync from Data Sheet"}
             </button>
             <button 
               onClick={handleMigrateOldDatabase} 
@@ -582,7 +610,10 @@ export default function AdminDashboard() {
                     <td className="p-4"><a href={submission.videoProof} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Link</a></td>
                     <td className="p-4 text-right">
                       {submission.status === "pending" && (
-                        <button onClick={() => handleAcceptSubmission(submission.id)} className="text-emerald-400 hover:underline mr-4">Accept</button>
+                        <>
+                          <button onClick={() => handleAcceptSubmission(submission.id)} className="text-emerald-400 hover:underline mr-4">Accept</button>
+                          <button onClick={() => handleRejectSubmission(submission.id)} className="text-[#a855f7] hover:underline mr-4">Reject</button>
+                        </>
                       )}
                       <button onClick={() => handleDeleteSubmission(submission.id)} className="text-red-400 hover:underline">Delete</button>
                     </td>
@@ -609,6 +640,50 @@ export default function AdminDashboard() {
             Please use the <strong className="text-white">Authentication &gt; Users</strong> tab in your <a href="https://console.firebase.google.com" target="_blank" className="text-emerald-400 hover:underline">Firebase Console</a> to manage (view, add, or delete) users.
           </p>
         </div>
+      )}
+
+      {activeTab === "changelog" && (
+        <>
+          <div className="flex gap-4 mb-6">
+            <button 
+              onClick={() => setIsEditingChangelog({
+                id: `log-${Date.now()}`, date: new Date().toISOString(), content: ""
+              })} 
+              className="px-4 py-2 bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/30 rounded-lg text-sm font-bold uppercase"
+            >
+              + Add Changelog
+            </button>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden max-w-3xl">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-white/10 bg-black/40">
+                  <th className="p-4">Date</th>
+                  <th className="p-4">Content</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {changelogs.map(log => (
+                  <tr key={log.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="p-4 text-white/60">{new Date(log.date).toLocaleDateString()}</td>
+                    <td className="p-4 font-bold max-w-sm truncate">{log.content}</td>
+                    <td className="p-4 text-right">
+                      <button onClick={() => setIsEditingChangelog({...log})} className="text-blue-400 hover:underline mr-4">Edit</button>
+                      <button onClick={() => handleDeleteChangelog(log.id)} className="text-red-400 hover:underline">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+                {changelogs.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="p-8 text-center text-white/40">No changelog entries found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {isEditingLevel && (
@@ -723,6 +798,28 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {isEditingChangelog && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <form onSubmit={saveChangelog} className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">{changelogs.find(l => l.id === isEditingChangelog.id) ? "Edit Changelog" : "New Changelog"}</h2>
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <div>
+                 <label className="block text-xs uppercase text-white/50 mb-1">Date</label>
+                 <input type="datetime-local" className="w-full bg-black border border-white/10 rounded p-2 text-white" value={(isEditingChangelog.date || '').slice(0, 16)} onChange={(e) => setIsEditingChangelog({...isEditingChangelog, date: new Date(e.target.value).toISOString()})} required />
+              </div>
+              <div>
+                 <label className="block text-xs uppercase text-white/50 mb-1">Content</label>
+                 <textarea className="w-full bg-black border border-white/10 rounded p-2 text-white h-24" value={isEditingChangelog.content} onChange={(e) => setIsEditingChangelog({...isEditingChangelog, content: e.target.value})} required />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setIsEditingChangelog(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded font-bold text-white">Save</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {levelToDelete && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-sm text-center">
@@ -770,6 +867,19 @@ export default function AdminDashboard() {
             <div className="flex justify-center gap-4">
               <button onClick={() => setSubmissionToDelete(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
               <button onClick={confirmDeleteSubmission} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-white">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {changelogToDelete && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-sm text-center">
+            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
+            <p className="mb-6">Are you sure you want to delete this changelog entry?</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={() => setChangelogToDelete(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
+              <button onClick={confirmDeleteChangelog} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-white">Delete</button>
             </div>
           </div>
         </div>
