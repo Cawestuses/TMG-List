@@ -103,8 +103,8 @@ export default function PlayerDetails() {
     switch (role) {
       case "Слеер": return "text-red-400 bg-red-400/10 border-red-400/20";
       case "Верифер": return "text-emerald-400 bg-emerald-400/10 border-emerald-400/20";
-      case "Креатор": return "text-blue-400 bg-blue-400/10 border-blue-400/20";
-      case "Хостер": return "text-purple-400 bg-purple-400/10 border-purple-400/20";
+      case "Креатор": return "text-orange-300 bg-orange-300/10 border-orange-300/20";
+      case "Хостер": return "text-amber-400 bg-amber-400/10 border-amber-400/20";
       case "Админ": return "text-amber-400 bg-amber-400/10 border-amber-400/20";
       default: return "text-zinc-400 bg-zinc-400/10 border-zinc-400/20";
     }
@@ -115,13 +115,13 @@ export default function PlayerDetails() {
       {/* Header Banner */}
       <div className="relative md:h-[auto] rounded-2xl overflow-hidden group border border-white/10 pb-8">
         <div className="absolute inset-0 bg-[#050507]">
-           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-500 via-[#050507] to-[#050507]" />
+           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-orange-400 via-[#050507] to-[#050507]" />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/80 to-transparent" />
         
         <div className="relative pt-[80px] px-8 flex flex-col md:flex-row items-end justify-between w-full h-full gap-6">
             <div className="flex flex-col md:flex-row items-center md:items-end gap-6 w-full text-center md:text-left">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex shrink-0 items-center justify-center text-5xl md:text-6xl font-black text-white shadow-xl shadow-cyan-500/20 border-4 border-[#050507]">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-orange-300 to-orange-500 flex shrink-0 items-center justify-center text-5xl md:text-6xl font-black text-white shadow-xl shadow-orange-400/20 border-4 border-[#050507]">
                     {player.username.charAt(0)}
                 </div>
                 <div className="w-full">
@@ -171,24 +171,24 @@ export default function PlayerDetails() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-xs uppercase font-bold text-white/50 mb-1">Country (Code or Name)</label>
-                            <input value={editProfile.country} onChange={e => setEditProfile({...editProfile, country: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-cyan-500" placeholder="e.g. RU, US" />
+                            <input value={editProfile.country} onChange={e => setEditProfile({...editProfile, country: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-amber-300" placeholder="e.g. RU, US" />
                           </div>
                           <div>
                             <label className="block text-xs uppercase font-bold text-white/50 mb-1 text-[#5865F2]">Discord Tag</label>
-                            <input value={editProfile.discord} onChange={e => setEditProfile({...editProfile, discord: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-cyan-500" placeholder="User#1234" />
+                            <input value={editProfile.discord} onChange={e => setEditProfile({...editProfile, discord: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-amber-300" placeholder="User#1234" />
                           </div>
                           <div>
                             <label className="block text-xs uppercase font-bold text-white/50 mb-1 text-orange-400">GD Username</label>
-                            <input value={editProfile.gdUsername} onChange={e => setEditProfile({...editProfile, gdUsername: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-cyan-500" placeholder="MyGDName" />
+                            <input value={editProfile.gdUsername} onChange={e => setEditProfile({...editProfile, gdUsername: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-amber-300" placeholder="MyGDName" />
                           </div>
                         </div>
                         <div>
                            <label className="block text-xs uppercase font-bold text-white/50 mb-1">Description</label>
-                           <textarea value={editProfile.description} onChange={e => setEditProfile({...editProfile, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-cyan-500 h-24" placeholder="Tell us about yourself..."></textarea>
+                           <textarea value={editProfile.description} onChange={e => setEditProfile({...editProfile, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-amber-300 h-24" placeholder="Tell us about yourself..."></textarea>
                         </div>
                         <div className="flex gap-2 justify-end">
                            <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-sm font-bold text-white/50 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-lg">Cancel</button>
-                           <button onClick={handleSaveProfile} disabled={saving} className="px-4 py-2 text-sm font-bold text-white bg-cyan-600 hover:bg-cyan-500 rounded-lg transition-colors flex items-center gap-2">
+                           <button onClick={handleSaveProfile} disabled={saving} className="px-4 py-2 text-sm font-bold text-white bg-orange-600 hover:bg-orange-500 rounded-lg transition-colors flex items-center gap-2">
                              {saving ? "Saving..." : <><Check className="w-4 h-4"/> Save Profile</>}
                            </button>
                         </div>
@@ -209,7 +209,7 @@ export default function PlayerDetails() {
                    <>
                      <div className="flex flex-col">
                         <span className="text-[10px] uppercase font-bold tracking-widest text-white/40">Total Points</span>
-                        <span className="text-2xl font-black text-cyan-400 mt-1">{player.points.toLocaleString()}</span>
+                        <span className="text-2xl font-black text-orange-300 mt-1">{player.points.toLocaleString()}</span>
                      </div>
                      <div className="flex flex-col">
                         <span className="text-[10px] uppercase font-bold tracking-widest text-white/40">Completions</span>
@@ -219,7 +219,7 @@ export default function PlayerDetails() {
                  ) : (
                    <div className="flex flex-col">
                       <span className="text-[10px] uppercase font-bold tracking-widest text-white/40">Created Levels</span>
-                      <span className="text-2xl font-black text-cyan-400 mt-1">{player.createdLevels}</span>
+                      <span className="text-2xl font-black text-orange-300 mt-1">{player.createdLevels}</span>
                    </div>
                  )}
             </div>
@@ -232,7 +232,7 @@ export default function PlayerDetails() {
           onClick={() => setActiveTab("slayer")}
           className={`px-6 py-3 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
             activeTab === "slayer" 
-              ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" 
+              ? "bg-orange-300/20 text-orange-300 border border-amber-300/30" 
               : "text-zinc-400 hover:text-white bg-white/5 border border-transparent"
           }`}
         >
@@ -242,7 +242,7 @@ export default function PlayerDetails() {
           onClick={() => setActiveTab("creator")}
           className={`px-6 py-3 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
             activeTab === "creator" 
-              ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" 
+              ? "bg-orange-300/20 text-orange-300 border border-amber-300/30" 
               : "text-zinc-400 hover:text-white bg-white/5 border border-transparent"
           }`}
         >
@@ -252,7 +252,7 @@ export default function PlayerDetails() {
           onClick={() => setActiveTab("progress")}
           className={`px-6 py-3 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
             activeTab === "progress" 
-              ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" 
+              ? "bg-orange-300/20 text-orange-300 border border-amber-300/30" 
               : "text-zinc-400 hover:text-white bg-white/5 border border-transparent"
           }`}
         >
@@ -272,17 +272,17 @@ export default function PlayerDetails() {
                  {activeTab === "slayer" && player.completedLevelsList?.length > 0 && player.completedLevelsList.map((level, i) => (
                     <div key={i} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-colors">
                         <div className="flex items-center gap-4">
-                            <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs border border-cyan-500/30">
+                            <div className="w-8 h-8 rounded-full bg-orange-300/20 text-orange-300 flex items-center justify-center font-bold text-xs border border-amber-300/30">
                               {i+1}
                             </div>
                             <div>
-                                <Link to={`/level/${level.id}`} className="font-bold text-white/90 hover:text-cyan-400 transition-colors text-sm md:text-base">{level.name}</Link>
+                                <Link to={`/level/${level.id}`} className="font-bold text-white/90 hover:text-orange-300 transition-colors text-sm md:text-base">{level.name}</Link>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-sm font-bold text-cyan-400">{level.progress}%</div>
+                             <div className="text-sm font-bold text-orange-300">{level.progress}%</div>
                              {level.url && (
-                               <a href={level.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/40 hover:text-blue-400 uppercase font-bold tracking-wider mt-1 block">Proof</a>
+                               <a href={level.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/40 hover:text-orange-300 uppercase font-bold tracking-wider mt-1 block">Proof</a>
                              )}
                         </div>
                     </div>
@@ -299,18 +299,18 @@ export default function PlayerDetails() {
                               <Target className="w-4 h-4" />
                             </div>
                             <div>
-                                <Link to={`/level/${level.id}`} className="font-bold text-white/90 hover:text-cyan-400 transition-colors text-sm md:text-base">{level.name}</Link>
+                                <Link to={`/level/${level.id}`} className="font-bold text-white/90 hover:text-orange-300 transition-colors text-sm md:text-base">{level.name}</Link>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-sm font-bold text-cyan-400">{level.progress}%</div>
+                             <div className="text-sm font-bold text-orange-300">{level.progress}%</div>
                              {level.url && (
-                               <a href={level.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/40 hover:text-blue-400 uppercase font-bold tracking-wider mt-1 block">Proof</a>
+                               <a href={level.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/40 hover:text-orange-300 uppercase font-bold tracking-wider mt-1 block">Proof</a>
                              )}
                         </div>
                     </div>
                  ))}
-                 
+
                  {activeTab === "progress" && (!player.progressLevelsList || player.progressLevelsList.length === 0) && (
                    <div className="p-8 text-center text-white/40 italic">No progress recorded yet.</div>
                  )}
@@ -321,7 +321,7 @@ export default function PlayerDetails() {
                              <Target className="w-4 h-4" />
                         </div>
                         <div className="font-bold text-white/90 text-sm md:text-base">
-                            <Link to={`/level/${level.id}`} className="hover:text-cyan-400 transition-colors">{level.name}</Link>
+                            <Link to={`/level/${level.id}`} className="hover:text-orange-300 transition-colors">{level.name}</Link>
                         </div>
                     </div>
                  ))}
@@ -341,7 +341,7 @@ export default function PlayerDetails() {
               {activeTab === "slayer" && (
                 <>
                   <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
-                       <div className="p-3 bg-cyan-500/10 rounded-lg text-cyan-400">
+                       <div className="p-3 bg-orange-300/10 rounded-lg text-orange-300">
                            <Trophy className="w-5 h-5" />
                        </div>
                        <div>
@@ -351,14 +351,14 @@ export default function PlayerDetails() {
                   </div>
                   
                   <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
-                       <div className="p-3 bg-purple-500/10 rounded-lg text-purple-400">
+                       <div className="p-3 bg-amber-500/10 rounded-lg text-amber-400">
                            <Target className="w-5 h-5" />
                        </div>
                        <div>
                            <div className="text-[10px] font-bold text-white/40 uppercase">Hardest Demon</div>
                            <div className="text-lg font-bold mt-0.5 leading-tight">
                                {player.hardestDemonId ? (
-                                  <Link to={`/level/${player.hardestDemonId}`} className="hover:text-cyan-400 transition-colors">{player.hardestDemon}</Link>
+                                  <Link to={`/level/${player.hardestDemonId}`} className="hover:text-orange-300 transition-colors">{player.hardestDemon}</Link>
                                ) : player.hardestDemon}
                            </div>
                        </div>
@@ -373,7 +373,7 @@ export default function PlayerDetails() {
                              <div className="text-[10px] font-bold text-white/40 uppercase">Best Progress</div>
                              <div className="text-lg font-bold mt-0.5 leading-tight">
                                  {player.hardestProgressId ? (
-                                    <Link to={`/level/${player.hardestProgressId}`} className="hover:text-cyan-400 transition-colors">{player.hardestProgressStr}</Link>
+                                    <Link to={`/level/${player.hardestProgressId}`} className="hover:text-orange-300 transition-colors">{player.hardestProgressStr}</Link>
                                  ) : player.hardestProgressStr} - {player.hardestProgressPercent}%
                              </div>
                          </div>
@@ -385,7 +385,7 @@ export default function PlayerDetails() {
               {activeTab === "creator" && (
                 <>
                   <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
-                       <div className="p-3 bg-cyan-500/10 rounded-lg text-cyan-400">
+                       <div className="p-3 bg-orange-300/10 rounded-lg text-orange-300">
                            <Code className="w-5 h-5" />
                        </div>
                        <div>

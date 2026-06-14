@@ -21,11 +21,11 @@ import AuthPage from "./pages/AuthPage";
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col font-sans relative overflow-x-hidden selection:bg-purple-500/30">
+      <div className="min-h-screen flex flex-col font-sans relative overflow-x-hidden selection:bg-amber-500/30">
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px]"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/10 rounded-full blur-[120px]"></div>
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-amber-600/10 rounded-full blur-[120px]"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/10 rounded-full blur-[120px]"></div>
           <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
         </div>
         
