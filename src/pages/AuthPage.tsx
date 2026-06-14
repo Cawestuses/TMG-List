@@ -225,7 +225,7 @@ export default function AuthPage() {
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className="w-full py-4 bg-gradient-to-r from-[#d2c89e] to-[#d8d0b6] font-bold rounded-xl shadow-lg shadow-[#d8d0b6]/20 hover:shadow-[#d8d0b6]/40 hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-gradient-to-r from-[#bfae7d] to-[#cfbe94] font-bold rounded-xl shadow-lg shadow-[#cfbe94]/25 hover:shadow-[#cfbe94]/45 hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Processing..." : (isLogin ? "Sign In" : "Sign Up")}
           </button>
@@ -236,7 +236,7 @@ export default function AuthPage() {
           <button 
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-[#d8d0b6] font-bold hover:underline"
+            className="text-[#cfbe94] font-bold hover:underline"
           >
             {isLogin ? "Register" : "Login"}
           </button>
