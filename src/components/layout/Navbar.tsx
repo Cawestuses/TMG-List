@@ -75,7 +75,7 @@ export function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <img 
-              src="{logoImg}"
+              src={logoImg},
               alt="TMG Demon List Logo" 
               className="h-8 w-auto object-contain transform group-hover:scale-105 transition-transform duration-300" 
             />
