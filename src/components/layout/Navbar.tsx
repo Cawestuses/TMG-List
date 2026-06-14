@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { handleFirestoreError, OperationType } from "@/lib/firebaseError";
 
 const navItems = [
   { key: "nav.demonList", path: "/top", icon: Trophy },
@@ -41,6 +42,7 @@ export function Navbar() {
       setNotifications(list);
     }, (err) => {
       console.error("Failed to subscription user notifications:", err);
+      handleFirestoreError(err, OperationType.LIST, "notifications");
     });
     
     return () => unsub();

@@ -110,7 +110,7 @@ const resources = {
     translation: {
       nav: {
         demonList: "Топ Демонов",
-        futureList: "Анрейт Лист",
+        futureList: "Будущий Лист",
         players: "Игроки",
         statistics: "Статистика",
         submit: "Отправить рекорд",
@@ -132,7 +132,7 @@ const resources = {
       },
       levels: {
         title: "Топ Демонов",
-        subtitle: "Самые сложные на данный момент уровни.",
+        subtitle: "Самые сложные уровни на данный момент.",
         search: "Поиск уровней...",
         rank: "Топ",
         levelName: "Название",
@@ -145,7 +145,7 @@ const resources = {
         inactive: "В архиве",
         noMatch: "По вашему запросу уровней не найдено",
         pointsLabel: "Очков",
-        publisher: "Выложил(а)",
+        publisher: "Выложил",
         levelInfo: "Информация об уровне",
         description: "Описание",
         verificationVideo: "Видео верификации (Пруф)",

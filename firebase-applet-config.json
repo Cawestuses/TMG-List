@@ -1,10 +1,10 @@
 {
   "projectId": "tmg-list",
-  "appId": "1:104757774501:web:2e7882de0230b4342c254c",
+  "appId": "1:104757774501:web:cefae785391dbe382c254c",
   "apiKey": "AIzaSyCm61Wj9DOhsEN5GfIoQiOTA5LGiThpeyg",
   "authDomain": "tmg-list.firebaseapp.com",
   "firestoreDatabaseId": "(default)",
   "storageBucket": "tmg-list.firebasestorage.app",
   "messagingSenderId": "104757774501",
-  "measurementId": "G-VJX39HDDRX"
+  "measurementId": ""
 }

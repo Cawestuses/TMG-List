@@ -10,6 +10,7 @@ import { calculatePointsForRank } from "../hooks/usePlayers";
 import { updateLevelsCache } from "../hooks/useLevels";
 import { updateFutureLevelsCache } from "../hooks/useFutureLevels";
 import { Upload, Image as ImageIcon, X, Trash2 } from "lucide-react";
+import { handleFirestoreError, OperationType } from "../lib/firebaseError";
 
 const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL || "";
@@ -82,15 +83,25 @@ export default function AdminDashboard() {
   }, [hasAccess, isElderModer, isAdmin]);
 
   const loadChangelogs = async () => {
-    const snap = await getDocs(collection(db, "changelog"));
-    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as ChangelogItem);
-    setChangelogs(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    try {
+      const snap = await getDocs(collection(db, "changelog"));
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as ChangelogItem);
+      setChangelogs(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    } catch (err) {
+      console.error("Error loading changelogs:", err);
+      handleFirestoreError(err, OperationType.LIST, "changelog");
+    }
   };
 
   const loadSubmissions = async () => {
-    const snap = await getDocs(collection(db, "record_submissions"));
-    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as RecordSubmission);
-    setSubmissions(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    try {
+      const snap = await getDocs(collection(db, "record_submissions"));
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as RecordSubmission);
+      setSubmissions(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    } catch (err) {
+      console.error("Error loading submissions:", err);
+      handleFirestoreError(err, OperationType.LIST, "record_submissions");
+    }
   };
 
   const loadProfiles = async () => {
@@ -104,6 +115,7 @@ export default function AdminDashboard() {
       setProfiles(data);
     } catch (err) {
       console.error("Error loading profiles:", err);
+      handleFirestoreError(err, OperationType.LIST, "user_profiles");
     } finally {
       setLoadingProfiles(false);
     }
@@ -116,6 +128,7 @@ export default function AdminDashboard() {
       setLogsList(data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
     } catch (err) {
       console.error("Failed to load moderator action logs:", err);
+      handleFirestoreError(err, OperationType.LIST, "moderator_logs");
     }
   };
 
