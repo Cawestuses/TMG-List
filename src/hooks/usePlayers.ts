@@ -21,6 +21,17 @@ interface PlayerStat {
   roles: string[];
 }
 
+export const calculatePointsForRank = (rank: number): number => {
+  if (rank >= 67) return 0.5;
+  let points = 0.5;
+  for (let r = 66; r >= rank; r--) {
+    if (r % 10 === 0 || r % 10 === 7) {
+      points += 0.5;
+    }
+  }
+  return points;
+};
+
 export function usePlayers() {
   const { levels, loading: levelsLoading } = useLevels();
   const [submissions, setSubmissions] = useState<RecordSubmission[]>([]);
@@ -85,7 +96,7 @@ export function usePlayers() {
       if (vName && vName.toLowerCase() !== "tmg archive" && vName.toLowerCase() !== "not top 20") {
         const pStat = getStats(vName);
         if (level.isActive) {
-          pStat.points += (level.points || 0);
+          pStat.points += calculatePointsForRank(level.rank);
           pStat.completedLevels += 1;
           pStat.verifiedLevels += 1;
           pStat.completedLevelsList.push({ name: level.name, progress: 100, url: level.video, id: level.id });
@@ -116,7 +127,7 @@ export function usePlayers() {
         if (level && level.isActive) {
           // If 100% completion
           if (sub.progress === 100 && !pStat.completedLevelsList.find(c => (c.name || "").toLowerCase() === (sub.levelName || "").toLowerCase())) {
-            pStat.points += (level.points || 0);
+            pStat.points += calculatePointsForRank(level.rank);
             pStat.completedLevels += 1;
             pStat.completedLevelsList.push({ name: level.name, progress: 100, url: sub.videoProof, id: level.id });
 
@@ -175,6 +186,13 @@ export function usePlayers() {
       }
 
       const profile = profiles[key] || {};
+      
+      // Assign custom moderator roles
+      if (normalizedKey.startsWith('infinity_starmaizik') || normalizedKey.startsWith('infinify_starmaizik') || profile.role === 'elder_moder') {
+        if (!roles.includes("Elder Moder")) roles.push("Elder Moder");
+      } else if (profile.role === 'moderator') {
+        roles.push("Модератор");
+      }
 
       return {
         id: `player-${key.replace(/\s+/g, '-')}`,

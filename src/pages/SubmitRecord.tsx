@@ -41,7 +41,8 @@ export default function SubmitRecord() {
     const username = user.email ? user.email.split('@')[0] : "Player";
     
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      const envUrl = import.meta.env.VITE_API_URL || "";
+      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
       const res = await fetch(`${API_BASE_URL}/api/submit-record`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

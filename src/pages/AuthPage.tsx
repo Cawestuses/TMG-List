@@ -41,36 +41,8 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        try {
-          await loginWithEmail(emailToUse, password);
-          navigate("/");
-        } catch (loginErr: any) {
-          // Clean up username representation
-          const username = email.includes("@") ? email.split("@")[0] : email;
-          const normalizedUsername = username.trim().toLowerCase();
-          
-          try {
-            // Attempt auto-registration on the fly if user didn't exist
-            await registerWithEmail(emailToUse, password);
-            
-            // Auto-create profile
-            await setDoc(doc(db, "user_profiles", normalizedUsername), {
-              claimed: true,
-              claimedBy: emailToUse,
-              claimedAt: new Date().toISOString(),
-              country: "RU",
-              username: normalizedUsername === "infinity_starmaizik" ? "Infinity_starmaizik" : username,
-              description: normalizedUsername === "infinity_starmaizik" ? "Main Admin of TMG List" : "User of TMG List"
-            }, { merge: true });
-            
-            navigate("/");
-            return;
-          } catch (regErr: any) {
-            console.error("Auto-registration on login failed:", regErr);
-          }
-          
-          throw loginErr;
-        }
+        await loginWithEmail(emailToUse, password);
+        navigate("/");
       } else {
         const username = email.includes("@") ? email.split("@")[0] : email;
         const normalizedUsername = username.trim().toLowerCase();
@@ -96,6 +68,10 @@ export default function AuthPage() {
           }
         } catch (e) {
           console.error("Error checking claim status:", e);
+        }
+
+        if (alreadyClaimed) {
+          throw new Error(t("auth.already_claimed", "This profile has already been claimed by another user."));
         }
 
         await registerWithEmail(emailToUse, password);
@@ -133,7 +109,15 @@ export default function AuthPage() {
       }
     } catch (err: any) {
       console.error(err);
-      setAuthError(err.message || "Authentication failed. Check your password constraints.");
+      let friendlyMessage = err.message || t("auth.failed", "Authentication failed. Check your password constraints.");
+      if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+        friendlyMessage = t("auth.invalid_credentials", "Invalid username/email or password.");
+      } else if (err.code === "auth/email-already-in-use") {
+        friendlyMessage = t("auth.email_already_in_use", "This username or email is already registered.");
+      } else if (err.code === "auth/weak-password") {
+        friendlyMessage = t("auth.weak_password", "Password is too weak. It must be at least 6 characters.");
+      }
+      setAuthError(friendlyMessage);
     } finally {
       setIsSubmitting(false);
     }

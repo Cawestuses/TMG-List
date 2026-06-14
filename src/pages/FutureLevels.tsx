@@ -110,8 +110,22 @@ export default function FutureLevels() {
                       <div className="grid grid-cols-[1fr_2fr_1fr_60px] gap-4 items-center py-4 px-6 rounded-xl hover:bg-white/5 transition-colors cursor-pointer border border-transparent backdrop-blur-sm group-hover:border-white/5">
                         
                         {/* Level Name */}
-                        <div>
-                          <div className="font-bold text-sm leading-tight text-white/80 group-hover:text-white transition-colors">{level.name}</div>
+                        <div className="flex items-center gap-3">
+                          {level.thumbnail ? (
+                            <img 
+                              src={level.thumbnail} 
+                              alt={level.name} 
+                              className="w-16 h-10 object-cover rounded-md border border-white/10 shrink-0 bg-black/50" 
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-16 h-10 rounded-md bg-purple-500/10 border border-purple-500/20 shrink-0 flex items-center justify-center text-xs text-purple-400 font-mono">
+                              FTR
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-bold text-sm leading-tight text-white/80 group-hover:text-white transition-colors">{level.name}</div>
+                          </div>
                         </div>
 
                         {/* Crew */}

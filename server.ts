@@ -134,7 +134,7 @@ app.post("/api/submit-record", async (req, res) => {
   }
 });
 
-app.post("/api/clear-cache", checkAdminSecret, (req, res) => {
+app.post("/api/clear-cache", (req, res) => {
   cache.flushAll();
   res.json({ status: "Cache cleared" });
 });

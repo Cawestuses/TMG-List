@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { GlowCard } from "../components/ui/GlowCard";
 import { getVideoEmbedUrl } from "../lib/utils";
 import type { Level, RecordSubmission } from "../types";
-import { Play, Calendar, User, ShieldCheck, Trophy, Video } from "lucide-react";
+import { Play, Calendar, User, ShieldCheck, Trophy, Video, Hash } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, updateDoc, doc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 import { useLevels } from "../hooks/useLevels";
@@ -16,9 +16,21 @@ export default function LevelDetails() {
   const { t } = useTranslation();
   const [submissions, setSubmissions] = useState<RecordSubmission[]>([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
+  const [localVictors, setLocalVictors] = useState<number | null>(null);
 
   const level = levels.find(l => l.id === id) || null;
   const levelName = level?.name;
+  const embedUrl = level?.video ? getVideoEmbedUrl(level.video) || null : null;
+
+  useEffect(() => {
+    setLocalVictors(null);
+  }, [id]);
+
+  useEffect(() => {
+    if (level && localVictors === null) {
+      setLocalVictors(level.victors || 0);
+    }
+  }, [level, localVictors]);
 
   useEffect(() => {
     async function fetchRecords() {
@@ -44,6 +56,23 @@ export default function LevelDetails() {
         });
         
         setSubmissions(data);
+
+        if (level && level.id) {
+          const accepted100s = data.filter(s => s.status === "accepted" && Number(s.progress) === 100).length;
+          setLocalVictors(accepted100s);
+          if ((level.victors || 0) !== accepted100s) {
+            try {
+              await updateDoc(doc(db, "levels", level.id), { victors: accepted100s });
+              const envUrl = import.meta.env.VITE_API_URL || "";
+              const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+              if (API_BASE_URL) {
+                fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
+              }
+            } catch (updateErr) {
+              console.error("Failed to update victors count", updateErr);
+            }
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch records", err);
       } finally {
@@ -61,8 +90,17 @@ export default function LevelDetails() {
       {/* Header Banner */}
       <div className="relative h-[300px] md:h-[400px] rounded-2xl overflow-hidden group border border-white/10">
         <div className="absolute inset-0 bg-[#050507]">
-           {/* Fallback pattern if no thumbnail */}
-           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-500 via-[#050507] to-[#050507]" />
+          {level.thumbnail ? (
+            <img 
+              src={level.thumbnail} 
+              alt={level.name} 
+              className="w-full h-full object-cover opacity-30 transition-transform duration-500 group-hover:scale-105" 
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            /* Fallback pattern if no thumbnail */
+            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-500 via-[#050507] to-[#050507]" />
+          )}
         </div>
         
         <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/50 to-transparent" />
@@ -87,10 +125,10 @@ export default function LevelDetails() {
         <div className="md:col-span-2 space-y-6">
           <GlowCard>
             <div className="aspect-video bg-black/50 rounded-lg overflow-hidden border border-white/5 flex items-center justify-center relative">
-              {level.video ? (
+              {embedUrl ? (
                 <iframe
                   className="w-full h-full absolute inset-0"
-                  src={getVideoEmbedUrl(level.video)}
+                  src={embedUrl}
                   title="Video player"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -155,9 +193,15 @@ export default function LevelDetails() {
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 text-zinc-400">
+                  <Hash className="w-4 h-4" /> {t("levels.geometryDashId", "Geometry Dash ID")}
+                </div>
+                <div className="font-mono text-cyan-400 font-bold">{level.geometryDashId || "N/A"}</div>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2 text-zinc-400">
                   <Trophy className="w-4 h-4" /> {t("levels.victors")}
                 </div>
-                <div className="font-mono text-[#a855f7] font-bold">{level.victors}</div>
+                <div className="font-mono text-[#a855f7] font-bold">{localVictors !== null ? localVictors : level.victors}</div>
               </div>
             </div>
           </GlowCard>

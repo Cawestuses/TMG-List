@@ -1,10 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { Menu, X, Trophy, Swords, Users, BarChart2, FileUp, Languages, LogIn, LogOut, Settings, User } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Trophy, Swords, Users, BarChart2, FileUp, Languages, LogIn, LogOut, Settings, User, Bell } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
+import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const navItems = [
   { key: "nav.demonList", path: "/top", icon: Trophy },
@@ -18,7 +20,44 @@ export function Navbar() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const { t, i18n } = useTranslation();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, isElderModer, isModerator, logout } = useAuth();
+
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (!user || !user.email) {
+      setNotifications([]);
+      return;
+    }
+    const q = query(
+      collection(db, "notifications"),
+      where("userEmail", "==", user.email.trim().toLowerCase())
+    );
+    
+    const unsub = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setNotifications(list);
+    }, (err) => {
+      console.error("Failed to subscription user notifications:", err);
+    });
+    
+    return () => unsub();
+  }, [user]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAllAsRead = async () => {
+    try {
+      const promises = notifications.filter(n => !n.read).map(n => 
+        updateDoc(doc(db, "notifications", n.id), { read: true })
+      );
+      await Promise.all(promises);
+    } catch (err) {
+      console.error("Failed to mark notifications as read:", err);
+    }
+  };
 
 
   const toggleLanguage = () => {
@@ -72,11 +111,77 @@ export function Navbar() {
             
             {user ? (
               <div className="flex items-center gap-3">
-                {isAdmin && (
+                {(isAdmin || isElderModer || isModerator) && (
                   <Link to="/admin" className="p-2 text-purple-400 hover:text-purple-300 hover:bg-white/5 rounded-md transition-colors" title="Admin Dashboard">
                     <Settings className="w-4 h-4" />
                   </Link>
                 )}
+
+                {/* Real-time Notifications Dropdown */}
+                <div className="relative">
+                  <button 
+                    onClick={() => {
+                      setShowNotifications(!showNotifications);
+                      if (!showNotifications && unreadCount > 0) {
+                        markAllAsRead();
+                      }
+                    }}
+                    className={cn(
+                      "p-2 rounded-md transition-colors relative focus:outline-none",
+                      showNotifications ? "text-purple-400 bg-white/5" : "text-zinc-400 hover:text-white hover:bg-white/5"
+                    )}
+                    title="Notifications"
+                  >
+                    <Bell className="w-4 h-4" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+                    )}
+                  </button>
+
+                  {showNotifications && (
+                    <div className="absolute right-0 mt-2 w-80 bg-zinc-950/95 border border-white/10 rounded-xl shadow-2xl p-4 z-50 text-xs text-white max-h-96 overflow-y-auto backdrop-blur-xl">
+                      <div className="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
+                        <span className="font-bold tracking-wide text-[10px] uppercase text-zinc-400">Notifications</span>
+                        {unreadCount > 0 && (
+                          <button onClick={markAllAsRead} className="text-[10px] text-purple-400 hover:underline">Mark all as read</button>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        {notifications.map((notif) => (
+                          <div 
+                            key={notif.id} 
+                            className={cn(
+                              "p-2.5 rounded-lg border leading-relaxed",
+                              notif.read ? "bg-black/20 border-white/5 text-white/50" : "bg-purple-950/20 border-purple-500/20 text-white"
+                            )}
+                          >
+                            <div className="flex justify-between items-start gap-2">
+                              <span className="font-semibold">Level: <span className="text-zinc-200">{notif.levelName}</span> ({notif.progress}%)</span>
+                              <span className={cn(
+                                "text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded-full select-none",
+                                notif.status === 'accepted' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/10" : "bg-pink-500/20 text-pink-400 border border-pink-500/10"
+                              )}>
+                                {notif.status}
+                              </span>
+                            </div>
+                            {notif.comment && (
+                              <p className="mt-1.5 text-[11px] text-white/50 bg-black/40 p-2 rounded border border-white/5 italic whitespace-normal break-words">
+                                "{notif.comment}"
+                              </p>
+                            )}
+                            <div className="mt-2 text-[9px] text-zinc-500 flex justify-between items-center">
+                              <span>By @{notif.moderator?.split('@')[0]}</span>
+                              <span>{new Date(notif.timestamp).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                        {notifications.length === 0 && (
+                          <p className="text-center py-6 text-zinc-500">No notifications yet.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <Link 
                   to={`/player/${encodeURIComponent(user.email?.split('@')[0] || '')}`} 
                   className="px-3 py-1.5 bg-white/5 hover:bg-purple-500/10 border border-white/10 hover:border-purple-500/35 rounded-full text-xs text-white/90 hover:text-purple-300 transition-all duration-300 flex items-center gap-2 max-w-[150px] shadow-sm shadow-purple-500/5 hover:shadow-purple-500/10"
@@ -154,7 +259,7 @@ export function Navbar() {
             
             {user ? (
               <>
-                {isAdmin && (
+                {(isAdmin || isElderModer || isModerator) && (
                   <Link
                     to="/admin"
                     onClick={() => setIsOpen(false)}

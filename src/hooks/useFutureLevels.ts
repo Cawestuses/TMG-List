@@ -8,6 +8,11 @@ let cachedFutureLevels: FutureLevel[] | null = null;
 let isFetching = false;
 let subscribers: ((levels: FutureLevel[]) => void)[] = [];
 
+export function updateFutureLevelsCache(data: FutureLevel[]) {
+  cachedFutureLevels = [...data];
+  subscribers.forEach(sub => sub(cachedFutureLevels!));
+}
+
 export function useFutureLevels() {
   const [levels, setLevels] = useState<FutureLevel[]>(cachedFutureLevels || []);
   const [loading, setLoading] = useState(!cachedFutureLevels);

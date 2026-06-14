@@ -25,9 +25,10 @@
         "victors": { "type": "number" },
         "video": { "type": "string" },
         "isActive": { "type": "boolean" },
-        "thumbnail": { "type": "string" }
+        "thumbnail": { "type": "string" },
+        "geometryDashId": { "type": "string" }
       },
-      "required": ["id", "rank", "name", "difficulty", "points", "creator", "verifier", "victors", "video", "isActive"]
+      "required": ["id", "rank", "name", "difficulty", "points", "creator", "verifier", "victors", "video", "isActive", "geometryDashId"]
     }
   },
   "firestore": {

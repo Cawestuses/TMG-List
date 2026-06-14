@@ -6,6 +6,11 @@ let cachedLevels: Level[] | null = null;
 let isFetching = false;
 let subscribers: ((levels: Level[]) => void)[] = [];
 
+export function updateLevelsCache(data: Level[]) {
+  cachedLevels = [...data].sort((a, b) => a.rank - b.rank);
+  subscribers.forEach(sub => sub(cachedLevels!));
+}
+
 export function useLevels() {
   const [levels, setLevels] = useState<Level[]>(cachedLevels || []);
   const [loading, setLoading] = useState(!cachedLevels);
@@ -26,7 +31,8 @@ export function useLevels() {
 
     if (!isFetching) {
       isFetching = true;
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      const envUrl = import.meta.env.VITE_API_URL || "";
+      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
       fetch(`${API_BASE_URL}/api/levels`)
         .then(res => res.json())
         .then((data: Level[]) => {

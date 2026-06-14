@@ -2,23 +2,29 @@ import React, { useState, useEffect } from "react";
 import { Navbar } from "../components/layout/Navbar";
 import { Footer } from "../components/layout/Footer";
 import { useAuth } from "../lib/auth";
-import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, updateDoc, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Level, Verifier, FutureLevel, RecordSubmission, ChangelogItem } from "../types";
 import { Navigate, Link } from "react-router-dom";
+import { calculatePointsForRank } from "../hooks/usePlayers";
+import { updateLevelsCache } from "../hooks/useLevels";
+import { updateFutureLevelsCache } from "../hooks/useFutureLevels";
+import { Upload, Image as ImageIcon, X, Trash2 } from "lucide-react";
 
 export default function AdminDashboard() {
-  const { user, isAdmin, loading, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "submissions" | "users" | "changelog">("levels");
+  const { user, isAdmin, isElderModer, isModerator, role: userRole, loading, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "submissions" | "users" | "changelog" | "logs">("levels");
   
   const [changelogs, setChangelogs] = useState<ChangelogItem[]>([]);
   const [isEditingChangelog, setIsEditingChangelog] = useState<ChangelogItem | null>(null);
   const [changelogToDelete, setChangelogToDelete] = useState<string | null>(null);
+  const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   
   const [levels, setLevels] = useState<Level[]>([]);
   const [submissions, setSubmissions] = useState<RecordSubmission[]>([]);
-  const [submissionToDelete, setSubmissionToDelete] = useState<string | null>(null);
   const [isEditingLevel, setIsEditingLevel] = useState<Level | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [levelToDelete, setLevelToDelete] = useState<string | null>(null);
 
   const [verifiers, setVerifiers] = useState<Verifier[]>([]);
@@ -30,6 +36,7 @@ export default function AdminDashboard() {
   const [futureToDelete, setFutureToDelete] = useState<string | null>(null);
 
   const [isImporting, setIsImporting] = useState(false);
+  const [isFixingRanks, setIsFixingRanks] = useState(false);
   const [importText, setImportText] = useState("");
   const [importError, setImportError] = useState("");
 
@@ -42,15 +49,31 @@ export default function AdminDashboard() {
   const [isSheetsModalOpen, setIsSheetsModalOpen] = useState(false);
   const [syncLogs, setSyncLogs] = useState("");
 
+  // Role and Log States (Task 5)
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
+  const [usersSearch, setUsersSearch] = useState("");
+  const [logsList, setLogsList] = useState<any[]>([]);
+
+  // Submissions reject/accept modal states (Task 1)
+  const [submissionWithComment, setSubmissionWithComment] = useState<{ id: string; action: "accept" | "reject" | "delete"; submission: RecordSubmission } | null>(null);
+  const [moderatorComment, setModeratorComment] = useState("");
+
+  const hasAccess = isAdmin || isElderModer || isModerator;
+
   useEffect(() => {
-    if (isAdmin) {
+    if (hasAccess) {
       loadLevels();
       loadVerifiers();
       loadFutureLevels();
       loadSubmissions();
       loadChangelogs();
+      if (isElderModer || isAdmin) {
+        loadProfiles();
+        loadLogs();
+      }
     }
-  }, [isAdmin]);
+  }, [hasAccess, isElderModer, isAdmin]);
 
   const loadChangelogs = async () => {
     const snap = await getDocs(collection(db, "changelog"));
@@ -64,22 +87,106 @@ export default function AdminDashboard() {
     setSubmissions(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   };
 
+  const loadProfiles = async () => {
+    setLoadingProfiles(true);
+    try {
+      const snap = await getDocs(collection(db, "user_profiles"));
+      const data = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setProfiles(data);
+    } catch (err) {
+      console.error("Error loading profiles:", err);
+    } finally {
+      setLoadingProfiles(false);
+    }
+  };
+
+  const loadLogs = async () => {
+    try {
+      const snap = await getDocs(collection(db, "moderator_logs"));
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as any);
+      setLogsList(data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+    } catch (err) {
+      console.error("Failed to load moderator action logs:", err);
+    }
+  };
+
+  const handleUpdateRole = async (profileId: string, newRole: string) => {
+    try {
+      if (userRole === "elder_moder" && ["admin", "elder_moder"].includes(newRole)) {
+         return alert("You do not have permission to assign this role.");
+      }
+      await updateDoc(doc(db, "user_profiles", profileId), { role: newRole });
+      await loadProfiles();
+      
+      const logId = `log-${Date.now()}`;
+      await setDoc(doc(db, "moderator_logs", logId), {
+        id: logId,
+        moderatorEmail: user?.email || "",
+        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        action: "updated_role",
+        details: `Changed role of user "${profileId}" to "${newRole}"`,
+        timestamp: new Date().toISOString()
+      });
+      alert(`User role updated successfully to "${newRole}"`);
+    } catch (err: any) {
+      console.error("Failed to update role:", err);
+      alert("Error updating role: " + err.message);
+    }
+  };
+
+  const handleDeleteProfile = (profileId: string) => {
+    if (!isAdmin) return;
+    setProfileToDelete(profileId);
+  };
+
+  const confirmDeleteProfile = async () => {
+    if (!profileToDelete) return;
+    
+    try {
+      await deleteDoc(doc(db, "user_profiles", profileToDelete));
+      await loadProfiles();
+      
+      const logId = `log-${Date.now()}`;
+      await setDoc(doc(db, "moderator_logs", logId), {
+        id: logId,
+        moderatorEmail: user?.email || "",
+        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        action: "deleted_profile",
+        details: `Deleted user profile entry: "${profileToDelete}".`,
+        timestamp: new Date().toISOString()
+      });
+      setProfileToDelete(null);
+    } catch (err: any) {
+      console.error(err);
+      setProfileToDelete(null);
+    }
+  };
+
   const loadLevels = async () => {
     const snap = await getDocs(collection(db, "levels"));
-    const data = snap.docs.map(doc => doc.data() as Level);
-    setLevels(data.sort((a, b) => a.rank - b.rank));
+    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Level));
+    const sorted = data.sort((a, b) => a.rank - b.rank);
+    setLevels(sorted);
+    updateLevelsCache(sorted);
   };
   
   const loadVerifiers = async () => {
     const snap = await getDocs(collection(db, "verifiers"));
-    const data = snap.docs.map(doc => doc.data() as Verifier);
+    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Verifier));
     setVerifiers(data);
   };
   
   const loadFutureLevels = async () => {
     const snap = await getDocs(collection(db, "future_levels"));
-    const data = snap.docs.map(doc => doc.data() as FutureLevel);
+    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as FutureLevel));
     setFutureLevels(data);
+    updateFutureLevelsCache(data);
+    const envUrl = import.meta.env.VITE_API_URL || "";
+    const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+    fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
   };
 
   const handleDeleteLevel = (id: string) => {
@@ -88,9 +195,27 @@ export default function AdminDashboard() {
 
   const confirmDeleteLevel = async () => {
     if (levelToDelete) {
-      await deleteDoc(doc(db, "levels", levelToDelete));
+      const lvl = levels.find(l => l.id === levelToDelete);
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "levels", levelToDelete));
+
+      if (lvl) {
+         levels.forEach(l => {
+            if (l.rank > lvl.rank) {
+               batch.update(doc(db, "levels", l.id), {
+                  rank: l.rank - 1,
+                  points: calculatePointsForRank(l.rank - 1)
+               });
+            }
+         });
+      }
+      
+      await batch.commit();
       setLevelToDelete(null);
       await loadLevels();
+      const envUrl = import.meta.env.VITE_API_URL || "";
+      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
     }
   };
 
@@ -119,25 +244,151 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteSubmission = (id: string) => {
-    setSubmissionToDelete(id);
-  };
-
-  const confirmDeleteSubmission = async () => {
-    if (submissionToDelete) {
-      await deleteDoc(doc(db, "record_submissions", submissionToDelete));
-      setSubmissionToDelete(null);
-      await loadSubmissions();
+    const sub = submissions.find(s => s.id === id);
+    if (sub) {
+      setSubmissionWithComment({ id, action: "delete", submission: sub });
+      setModeratorComment("");
     }
   };
 
   const handleAcceptSubmission = async (id: string) => {
-    await updateDoc(doc(db, "record_submissions", id), { status: "accepted" });
-    await loadSubmissions();
+    const sub = submissions.find(s => s.id === id);
+    if (sub) {
+      setSubmissionWithComment({ id, action: "accept", submission: sub });
+      setModeratorComment("");
+    }
   };
 
   const handleRejectSubmission = async (id: string) => {
-    await updateDoc(doc(db, "record_submissions", id), { status: "rejected" });
-    await loadSubmissions();
+    const sub = submissions.find(s => s.id === id);
+    if (sub) {
+      setSubmissionWithComment({ id, action: "reject", submission: sub });
+      setModeratorComment("");
+    }
+  };
+
+  const confirmSubmissionAction = async () => {
+    if (!submissionWithComment) return;
+    const { id, action, submission } = submissionWithComment;
+    const status = action === "accept" ? "accepted" : action === "reject" ? "rejected" : "deleted";
+    
+    try {
+      if (action === "delete") {
+        await deleteDoc(doc(db, "record_submissions", id));
+      } else {
+        await updateDoc(doc(db, "record_submissions", id), { status: status });
+      }
+
+      // Recalculate victors immediately
+      if (submission.levelName) {
+        const lvl = levels.find(l => l.name.trim().toLowerCase() === submission.levelName.trim().toLowerCase());
+        if (lvl) {
+          const subsSnap = await getDocs(query(
+            collection(db, "record_submissions"),
+            where("levelName", "==", lvl.name)
+          ));
+          let count = 0;
+          subsSnap.forEach(s => {
+             const data = s.data();
+             if (data.status === "accepted" && Number(data.progress) === 100) {
+               count++;
+             }
+          });
+          if (lvl.victors !== count) {
+            await updateDoc(doc(db, "levels", lvl.id), { victors: count });
+            await loadLevels(); // Refresh the list for Admin Dashboard
+            const envUrl = import.meta.env.VITE_API_URL || "";
+            const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+            if (API_BASE_URL) fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
+          }
+        }
+      }
+      
+      // 2. Add notification for the user (Task 1)
+      const notificationId = `notif-${Date.now()}`;
+      await setDoc(doc(db, "notifications", notificationId), {
+        id: notificationId,
+        userId: submission.userId || "",
+        userEmail: submission.userEmail || "",
+        levelName: submission.levelName || "",
+        progress: submission.progress || 100,
+        status: status,
+        comment: moderatorComment.trim(),
+        read: false,
+        timestamp: new Date().toISOString(),
+        videoProof: submission.videoProof || "",
+        moderator: user?.email || "Admin"
+      });
+      
+      // 3. Add Moderator Action Log (Task 5)
+      const logId = `log-${Date.now()}`;
+      await setDoc(doc(db, "moderator_logs", logId), {
+        id: logId,
+        moderatorEmail: user?.email || "",
+        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        action: action === "accept" ? "approved_record" : action === "reject" ? "rejected_record" : "deleted_record",
+        details: `${action === "accept" ? "Approved" : action === "reject" ? "Rejected" : "Deleted"} submission for level "${submission.levelName}" by player "${submission.username}" with progress ${submission.progress}%. Comment: "${moderatorComment.trim()}"`,
+        timestamp: new Date().toISOString()
+      });
+      
+      setSubmissionWithComment(null);
+      setModeratorComment("");
+      await loadSubmissions();
+      if (isElderModer || isAdmin) {
+        await loadLogs();
+      }
+    } catch (err: any) {
+      console.error("Failed to confirm submission action:", err);
+      alert("Error confirming action: " + err.message);
+    }
+  };
+
+  const fixRanksAndPoints = async () => {
+    if (!window.confirm("Are you sure you want to recalculate all ranks and points? This will sort levels by their current rank and sequentially assign ranks starting from 1.")) return;
+    setIsFixingRanks(true);
+    try {
+      const sortedLevels = [...levels].sort((a, b) => {
+        if (a.rank !== b.rank) return a.rank - b.rank;
+        return a.name.localeCompare(b.name);
+      });
+      const batch = writeBatch(db);
+      let updatedCount = 0;
+      sortedLevels.forEach((level, index) => {
+        const correctRank = index + 1;
+        const correctPoints = calculatePointsForRank(correctRank);
+        if (level.rank !== correctRank || level.points !== correctPoints) {
+          batch.update(doc(db, "levels", level.id), {
+            rank: correctRank,
+            points: correctPoints
+          });
+          updatedCount++;
+        }
+      });
+      if (updatedCount > 0) {
+        await batch.commit();
+        const logId = `log-${Date.now()}`;
+        await setDoc(doc(db, "moderator_logs", logId), {
+          id: logId,
+          moderatorEmail: user?.email || "",
+          moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+          action: "fixed_ranks",
+          details: `Triggered automatic fix for level ranks and points. Corrected ${updatedCount} levels.`,
+          timestamp: new Date().toISOString()
+        });
+        await loadLevels();
+        const envUrl = import.meta.env.VITE_API_URL || "";
+        const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+        fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
+        alert(`Ranks and points successfully fixed for ${updatedCount} levels!`);
+      } else {
+        alert("All levels already have the correct ranks and points.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Error fixing ranks: " + err.message);
+    } finally {
+      setIsFixingRanks(false);
+    }
   };
 
   const handleDeleteChangelog = (id: string) => {
@@ -149,7 +400,8 @@ export default function AdminDashboard() {
       await deleteDoc(doc(db, "changelog", changelogToDelete));
       setChangelogToDelete(null);
       await loadChangelogs();
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      const envUrl = import.meta.env.VITE_API_URL || "";
+      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
       fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
     }
   };
@@ -164,7 +416,8 @@ export default function AdminDashboard() {
       });
       setIsEditingChangelog(null);
       await loadChangelogs();
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      const envUrl = import.meta.env.VITE_API_URL || "";
+      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
       fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
     } catch (err) {
       console.error(err);
@@ -172,37 +425,134 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleImageFile = (file: File, isFuture: boolean = false) => {
+    if (!file) return;
+    if (isFuture ? !isEditingFuture : !isEditingLevel) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file (PNG, JPG, WEBP, etc.).");
+      return;
+    }
+    
+    setIsProcessingImage(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          setIsProcessingImage(false);
+          return;
+        }
+
+        // Keep document extremely lightweight by scaling to high quality standard width
+        const maxWidth = 640;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = (maxWidth / width) * height;
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const base64 = canvas.toDataURL("image/jpeg", 0.7);
+        if (isFuture) {
+          setIsEditingFuture(prev => prev ? { ...prev, thumbnail: base64 } : null);
+        } else {
+          setIsEditingLevel(prev => prev ? { ...prev, thumbnail: base64 } : null);
+        }
+        setIsProcessingImage(false);
+      };
+      img.onerror = () => {
+        setIsProcessingImage(false);
+        alert("Failed to compile image structure. Try another file.");
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => {
+      setIsProcessingImage(false);
+      alert("Failed to read image file.");
+    };
+    reader.readAsDataURL(file);
+  };
+
   const saveLevel = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isEditingLevel) return;
     
-    // Convert to proper types
+    const newRank = Number(isEditingLevel.rank);
+    const customPoints = Number(isEditingLevel.points) !== undefined && !isNaN(Number(isEditingLevel.points))
+      ? Number(isEditingLevel.points)
+      : calculatePointsForRank(newRank);
+
     const levelToSave: Level = {
       ...isEditingLevel,
-      rank: Number(isEditingLevel.rank),
-      points: Number(isEditingLevel.points),
+      rank: newRank,
+      points: customPoints,
       victors: Number(isEditingLevel.victors),
-      isActive: Boolean(isEditingLevel.isActive)
+      isActive: Boolean(isEditingLevel.isActive),
+      geometryDashId: String(isEditingLevel.geometryDashId || ""),
+      thumbnail: String(isEditingLevel.thumbnail || "")
     };
 
     const isNew = !levels.find(l => l.id === levelToSave.id);
+    const oldLevel = levels.find(l => l.id === levelToSave.id);
+    const oldRank = oldLevel ? oldLevel.rank : null;
 
     try {
+      const batch = writeBatch(db);
+
       if (isNew) {
-        const batch = writeBatch(db);
-        levels.forEach(l => {
-          if (l.rank >= levelToSave.rank) {
-            batch.update(doc(db, "levels", l.id), { rank: Number(l.rank) + 1 });
-          }
-        });
-        batch.set(doc(db, "levels", levelToSave.id || `lvl-${Date.now()}`), levelToSave);
-        await batch.commit();
-      } else {
-        await setDoc(doc(db, "levels", levelToSave.id), levelToSave);
+         levels.forEach(l => {
+            if (l.rank >= newRank) {
+               batch.update(doc(db, "levels", l.id), {
+                 rank: l.rank + 1,
+                 points: calculatePointsForRank(l.rank + 1)
+               });
+            }
+         });
+      } else if (oldRank !== null && oldRank !== newRank) {
+         levels.forEach(l => {
+            if (l.id === levelToSave.id) return;
+            if (oldRank < newRank) {
+               if (l.rank > oldRank && l.rank <= newRank) {
+                  batch.update(doc(db, "levels", l.id), {
+                    rank: l.rank - 1,
+                    points: calculatePointsForRank(l.rank - 1)
+                  });
+               }
+            } else {
+               if (l.rank >= newRank && l.rank < oldRank) {
+                  batch.update(doc(db, "levels", l.id), {
+                    rank: l.rank + 1,
+                    points: calculatePointsForRank(l.rank + 1)
+                  });
+               }
+            }
+         });
       }
-      
+
+      batch.set(doc(db, "levels", levelToSave.id || `lvl-${Date.now()}`), levelToSave);
+      await batch.commit();
+
+      const logId = `log-${Date.now()}`;
+      await setDoc(doc(db, "moderator_logs", logId), {
+        id: logId,
+        moderatorEmail: user?.email || "",
+        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        action: isNew ? "added_level" : "edited_level",
+        details: `${isNew ? "Added" : "Edited"} level "${levelToSave.name}" at rank ${levelToSave.rank} (points automatically calculated: ${levelToSave.points})`,
+        timestamp: new Date().toISOString()
+      });
+
       setIsEditingLevel(null);
       await loadLevels();
+      const envUrl = import.meta.env.VITE_API_URL || "";
+      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
     } catch (err) {
       console.error(err);
       alert("Failed to save level. " + err);
@@ -265,7 +615,8 @@ export default function AdminDashboard() {
           verifier: item.verifier || "",
           victors: Number(item.victors) || 0,
           video: item.video || "",
-          isActive: item.isActive !== undefined ? Boolean(item.isActive) : true
+          isActive: item.isActive !== undefined ? Boolean(item.isActive) : true,
+          geometryDashId: item.geometryDashId || ""
         };
         await setDoc(doc(db, "levels", id), level);
       }
@@ -314,7 +665,8 @@ export default function AdminDashboard() {
     setIsSyncingSheets(true);
     setSyncLogs("Connecting and loading data from Google Sheets...\n");
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      const envUrl = import.meta.env.VITE_API_URL || "";
+      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
       const res = await fetch(`${API_BASE_URL}/api/sync-sheets`, {
         method: "POST",
         headers: {
@@ -344,7 +696,7 @@ export default function AdminDashboard() {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin) {
+  if (!hasAccess) {
     return (
       <div className="min-h-screen pt-32 text-center text-white">
         <h1 className="text-3xl font-bold mb-6">Access Denied</h1>
@@ -391,12 +743,22 @@ export default function AdminDashboard() {
         >
           Submissions
         </button>
-        <button 
-          onClick={() => setActiveTab("users")}
-          className={`px-4 py-2 font-bold transition-colors ${activeTab === "users" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
-        >
-          Users
-        </button>
+        {(isElderModer || isAdmin) && (
+          <>
+            <button 
+              onClick={() => setActiveTab("users")}
+              className={`px-4 py-2 font-bold transition-colors ${activeTab === "users" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+            >
+              Users
+            </button>
+            <button 
+              onClick={() => setActiveTab("logs")}
+              className={`px-4 py-2 font-bold transition-colors ${activeTab === "logs" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+            >
+              Logs
+            </button>
+          </>
+        )}
         <button 
           onClick={() => setActiveTab("changelog")}
           className={`px-4 py-2 font-bold transition-colors ${activeTab === "changelog" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
@@ -410,7 +772,7 @@ export default function AdminDashboard() {
           <div className="flex flex-wrap gap-4 mb-6">
             <button 
               onClick={() => setIsEditingLevel({
-                id: `lvl-${Date.now()}`, rank: levels.length + 1, name: "", difficulty: "Extreme Demon", points: 0, creator: "", verifier: "", victors: 0, video: "", isActive: true
+                id: `lvl-${Date.now()}`, rank: levels.length + 1, name: "", difficulty: "Extreme Demon", points: 0, creator: "", verifier: "", victors: 0, video: "", isActive: true, thumbnail: "", geometryDashId: ""
               })} 
               className="px-4 py-2 bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/30 rounded-lg text-sm font-bold uppercase"
             >
@@ -427,6 +789,13 @@ export default function AdminDashboard() {
               className="px-4 py-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-sm font-bold uppercase"
             >
               Sync from Google Sheets
+            </button>
+            <button 
+              onClick={fixRanksAndPoints}
+              disabled={isFixingRanks}
+              className="px-4 py-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-bold uppercase disabled:opacity-50"
+            >
+              {isFixingRanks ? "Fixing..." : "Fix Ranks & Points"}
             </button>
           </div>
 
@@ -474,7 +843,7 @@ export default function AdminDashboard() {
           <div className="flex gap-4 mb-6">
             <button 
               onClick={() => setIsEditingFuture({
-                id: `fut-${Date.now()}`, name: "", creator: "", video: "", status: "Verifying"
+                id: `fut-${Date.now()}`, name: "", creator: "", video: "", status: "Verifying", thumbnail: ""
               })} 
               className="px-4 py-2 bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/30 rounded-lg text-sm font-bold uppercase"
             >
@@ -624,15 +993,153 @@ export default function AdminDashboard() {
         </>
       )}
 
-      {activeTab === "users" && (
-        <div className="bg-zinc-900 border border-white/10 rounded-xl p-8 max-w-2xl text-center mx-auto">
-          <h2 className="text-xl font-bold mb-4 font-heading">Users are now managed securely</h2>
-          <p className="text-white/60 mb-6">
-            For security reasons, app users are no longer stored in public database tables. All users are now safely isolated in Firebase Authentication. 
-          </p>
-          <p className="text-white/60 mb-8">
-            Please use the <strong className="text-white">Authentication &gt; Users</strong> tab in your <a href="https://console.firebase.google.com" target="_blank" className="text-emerald-400 hover:underline">Firebase Console</a> to manage (view, add, or delete) users.
-          </p>
+      {activeTab === "users" && (isElderModer || isAdmin) && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+            <div>
+              <h2 className="text-2xl font-bold font-heading">User Roles & Profiles</h2>
+              <p className="text-white/50 text-xs mt-1">Manage user roles dynamically. Changes take effect instantly across the application.</p>
+            </div>
+            <input 
+              type="text" 
+              placeholder="Search by username..." 
+              value={usersSearch} 
+              onChange={(e) => setUsersSearch(e.target.value)} 
+              className="bg-black border border-white/10 rounded-lg px-4 py-2 text-sm text-white w-full sm:w-64 focus:outline-none focus:border-purple-500/50"
+            />
+          </div>
+          {loadingProfiles ? (
+            <div className="text-center py-8 text-white/50">Loading profiles...</div>
+          ) : (
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-white/10 bg-black/40">
+                    <th className="p-4">Profile ID</th>
+                    <th className="p-4">User Details</th>
+                    <th className="p-4">GD Username / Country</th>
+                    <th className="p-4">Claimed By</th>
+                    <th className="p-4">Current Role</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {profiles
+                    .filter(p => !usersSearch || p.id.toLowerCase().includes(usersSearch.toLowerCase()) || (p.username || "").toLowerCase().includes(usersSearch.toLowerCase()))
+                    .map(profile => (
+                      <tr key={profile.id} className="hover:bg-white/5 transition-colors">
+                        <td className="p-4 font-bold font-mono text-purple-400">{profile.id}</td>
+                        <td className="p-4">
+                          <div className="font-semibold text-white">{profile.username || profile.id}</div>
+                          <div className="text-xs text-white/40">{profile.description || "No description"}</div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-zinc-300 font-mono text-xs">{profile.gdUsername || "N/A"}</div>
+                          <div className="text-xs text-emerald-400 font-bold">{profile.country || "RU"}</div>
+                        </td>
+                        <td className="p-4 text-xs text-white/60 font-mono">
+                          {profile.claimed ? (
+                            <>
+                              <span className="text-emerald-400 font-bold">Claimed:</span>
+                              <div className="text-[10px] text-white/40 mt-0.5">{profile.claimedBy}</div>
+                            </>
+                          ) : (
+                            <span className="text-white/30">Unclaimed</span>
+                          )}
+                        </td>
+                        <td className="p-4 flex items-center gap-2">
+                          <select
+                            value={profile.role || "user"}
+                            onChange={(e) => handleUpdateRole(profile.id, e.target.value)}
+                            disabled={
+                              profile.id === 'infinity_starmaizik' || 
+                              profile.id === 'infinify_starmaizik' ||
+                              (userRole === 'elder_moder' && ['admin', 'elder_moder'].includes(profile.role || 'user')) ||
+                              (profile.id.toLowerCase() === user?.email?.split('@')[0].toLowerCase())
+                            }
+                            className="bg-black border border-white/10 rounded-lg p-2 text-xs text-white cursor-pointer focus:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="user">User</option>
+                            <option value="moderator">Moderator</option>
+                            {(isAdmin || profile.role === 'elder_moder') && <option value="elder_moder">Elder Moder</option>}
+                            {(isAdmin || profile.role === 'admin') && <option value="admin">Admin</option>}
+                          </select>
+                          {isAdmin && profile.id !== 'infinity_starmaizik' && profile.id !== 'infinify_starmaizik' && (
+                            <button onClick={() => handleDeleteProfile(profile.id)} className="text-red-500 hover:text-red-400 p-2" title="Delete Profile Table Entry">✕</button>
+                          )}
+                        </td>
+                      </tr>
+                  ))}
+                  {profiles.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-white/40">No user profiles matched.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "logs" && (isElderModer || isAdmin) && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center mb-2">
+            <div>
+              <h2 className="text-2xl font-bold font-heading">Moderation Action Logs</h2>
+              <p className="text-white/50 text-xs mt-1">Audit log of all actions taken by list coordinators and moderators.</p>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={loadLogs} 
+                className="px-4 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 border border-purple-500/35 text-xs font-bold rounded-lg uppercase tracking-wide transition-colors"
+              >
+                Refresh Logs
+              </button>
+            </div>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-xl overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[700px]">
+              <thead>
+                <tr className="border-b border-white/10 bg-black/40">
+                  <th className="p-4 w-48">Timestamp</th>
+                  <th className="p-4 w-48">Moderator</th>
+                  <th className="p-4 w-40">Action</th>
+                  <th className="p-4">Details</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {logsList.map(log => (
+                  <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                    <td className="p-4 font-mono text-xs text-zinc-400">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </td>
+                    <td className="p-4 text-xs font-semibold">
+                      <div className="text-purple-400 font-mono">@{log.moderatorUsername}</div>
+                      <div className="text-[10px] text-white/40 mt-0.5">{log.moderatorEmail}</div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        (log.action || '').includes('approve') || (log.action || '').includes('accept') ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                        (log.action || '').includes('reject') ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' :
+                        (log.action || '').includes('role') ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' :
+                        'bg-zinc-500/10 text-zinc-300 border border-zinc-500/20'
+                      }`}>
+                        {log.action || 'unknown'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-xs text-white/80 max-w-sm whitespace-normal break-words leading-relaxed">
+                      {log.details}
+                    </td>
+                  </tr>
+                ))}
+                {logsList.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-white/40">No moderator logs available.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -690,8 +1197,23 @@ export default function AdminDashboard() {
                  <input className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingLevel.id} onChange={(e) => setIsEditingLevel({...isEditingLevel, id: e.target.value})} required />
               </div>
               <div>
+                 <label className="block text-xs uppercase text-white/50 mb-1">Geometry Dash ID</label>
+                 <input className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingLevel.geometryDashId || ""} onChange={(e) => setIsEditingLevel({...isEditingLevel, geometryDashId: e.target.value})} placeholder="e.g. 12345678" required />
+              </div>
+              <div>
                  <label className="block text-xs uppercase text-white/50 mb-1">Rank</label>
-                 <input type="number" className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingLevel.rank} onChange={(e) => setIsEditingLevel({...isEditingLevel, rank: Number(e.target.value)})} required />
+                 <input type="number" className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingLevel.rank} onChange={(e) => {
+                    const newRank = Number(e.target.value);
+                    setIsEditingLevel({
+                      ...isEditingLevel,
+                      rank: newRank,
+                      points: calculatePointsForRank(newRank)
+                    });
+                 }} required />
+              </div>
+              <div>
+                 <label className="block text-xs uppercase text-white/50 mb-1">Points</label>
+                 <input type="number" step="any" className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingLevel.points} onChange={(e) => setIsEditingLevel({...isEditingLevel, points: Number(e.target.value)})} required />
               </div>
               <div>
                  <label className="block text-xs uppercase text-white/50 mb-1">Name</label>
@@ -710,16 +1232,107 @@ export default function AdminDashboard() {
                  <input className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingLevel.verifier} onChange={(e) => setIsEditingLevel({...isEditingLevel, verifier: e.target.value})} required />
               </div>
               <div>
-                 <label className="block text-xs uppercase text-white/50 mb-1">Points</label>
-                 <input type="number" step="0.1" className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingLevel.points} onChange={(e) => setIsEditingLevel({...isEditingLevel, points: parseFloat(e.target.value)})} required />
-              </div>
-              <div>
                  <label className="block text-xs uppercase text-white/50 mb-1">Victors</label>
                  <input type="number" className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingLevel.victors} onChange={(e) => setIsEditingLevel({...isEditingLevel, victors: parseInt(e.target.value, 10)})} required />
               </div>
               <div className="col-span-2">
                  <label className="block text-xs uppercase text-white/50 mb-1">Video URL / #</label>
                  <input className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingLevel.video} onChange={(e) => setIsEditingLevel({...isEditingLevel, video: e.target.value})} required />
+              </div>
+              <div className="col-span-2 space-y-3">
+                 <label className="block text-xs uppercase text-white/50">Level Preview (Thumbnail)</label>
+                 
+                 {/* Drag and Drop Zone */}
+                 <div 
+                   onDragOver={(e) => {
+                     e.preventDefault();
+                     setDragActive(true);
+                   }}
+                   onDragLeave={(e) => {
+                     e.preventDefault();
+                     setDragActive(false);
+                   }}
+                   onDrop={(e) => {
+                     e.preventDefault();
+                     setDragActive(false);
+                     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                       handleImageFile(e.dataTransfer.files[0]);
+                     }
+                   }}
+                   className={`border-2 border-dashed rounded-xl p-6 transition-all duration-300 text-center flex flex-col items-center justify-center cursor-pointer ${
+                     dragActive 
+                       ? "border-purple-500 bg-purple-500/10 scale-[1.02]" 
+                       : "border-white/10 hover:border-white/25 hover:bg-white/5 bg-black/40"
+                   }`}
+                   onClick={() => document.getElementById("thumbnail-file-input")?.click()}
+                 >
+                   <input 
+                     type="file" 
+                     id="thumbnail-file-input" 
+                     className="hidden" 
+                     accept="image/*" 
+                     onChange={(e) => {
+                       if (e.target.files && e.target.files[0]) {
+                         handleImageFile(e.target.files[0]);
+                       }
+                     }} 
+                   />
+                   
+                   {isProcessingImage ? (
+                     <div className="flex flex-col items-center gap-2">
+                       <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                       <span className="text-xs text-purple-400 font-semibold uppercase tracking-wide">Compressing...</span>
+                     </div>
+                   ) : isEditingLevel.thumbnail ? (
+                     <div className="space-y-3 w-full">
+                       <div className="relative w-full max-w-[240px] h-[135px] mx-auto rounded-lg overflow-hidden border border-white/20">
+                         <img 
+                           src={isEditingLevel.thumbnail} 
+                           alt="Thumbnail preview" 
+                           className="w-full h-full object-cover" 
+                           referrerPolicy="no-referrer"
+                         />
+                         <button 
+                           type="button"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setIsEditingLevel({ ...isEditingLevel, thumbnail: "" });
+                           }}
+                           className="absolute top-1.5 right-1.5 p-1 bg-black/80 hover:bg-red-600 text-white rounded-full transition-colors"
+                           title="Remove preview"
+                         >
+                           <X className="w-3.5 h-3.5" />
+                         </button>
+                       </div>
+                       <p className="text-[10px] text-white/50 tracking-wide font-mono">Image attached. Drag another file or click to replace.</p>
+                     </div>
+                   ) : (
+                     <div className="flex flex-col items-center gap-2">
+                       <div className="p-3 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20 transition-transform">
+                         <Upload className="w-5 h-5" />
+                       </div>
+                       <div>
+                         <p className="text-xs font-semibold text-white/80">Drag & drop preview image here</p>
+                         <p className="text-[10px] text-white/40 mt-1">or click to browse from files</p>
+                       </div>
+                     </div>
+                   )}
+                 </div>
+
+                 {/* Keep alternative URL paste as secondary choice */}
+                 <div className="flex items-center gap-2 py-1">
+                   <div className="h-px bg-white/10 flex-1" />
+                   <span className="text-[10px] uppercase text-white/30 font-semibold tracking-wider">or paste direct image URL</span>
+                   <div className="h-px bg-white/10 flex-1" />
+                 </div>
+
+                 <input 
+                   type="text"
+                   className="w-full bg-black border border-white/10 rounded-lg p-2.5 text-xs text-white" 
+                   value={isEditingLevel.thumbnail || ""} 
+                   onChange={(e) => setIsEditingLevel({...isEditingLevel, thumbnail: e.target.value})} 
+                   placeholder="Enter direct URL (e.g. YouTube thumbnail link)" 
+                 />
               </div>
               <div className="col-span-2 flex items-center gap-2 mt-2">
                  <input type="checkbox" id="isActive" checked={isEditingLevel.isActive} onChange={(e) => setIsEditingLevel({...isEditingLevel, isActive: e.target.checked})} />
@@ -782,6 +1395,101 @@ export default function AdminDashboard() {
                     <option value="Decorating">Decorating</option>
                     <option value="Dropped">Dropped</option>
                  </select>
+              </div>
+              <div className="space-y-3">
+                 <label className="block text-xs uppercase text-white/50">Level Preview (Thumbnail)</label>
+                 
+                 {/* Drag and Drop Zone */}
+                 <div 
+                   onDragOver={(e) => {
+                     e.preventDefault();
+                     setDragActive(true);
+                   }}
+                   onDragLeave={(e) => {
+                     e.preventDefault();
+                     setDragActive(false);
+                   }}
+                   onDrop={(e) => {
+                     e.preventDefault();
+                     setDragActive(false);
+                     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                       handleImageFile(e.dataTransfer.files[0], true);
+                     }
+                   }}
+                   className={`border-2 border-dashed rounded-xl p-6 transition-all duration-300 text-center flex flex-col items-center justify-center cursor-pointer ${
+                     dragActive 
+                       ? "border-purple-500 bg-purple-500/10 scale-[1.02]" 
+                       : "border-white/10 hover:border-white/25 hover:bg-white/5 bg-black/40"
+                   }`}
+                   onClick={() => document.getElementById("future-thumbnail-file-input")?.click()}
+                 >
+                   <input 
+                     type="file" 
+                     id="future-thumbnail-file-input" 
+                     className="hidden" 
+                     accept="image/*" 
+                     onChange={(e) => {
+                       if (e.target.files && e.target.files[0]) {
+                         handleImageFile(e.target.files[0], true);
+                       }
+                     }} 
+                   />
+                   
+                   {isProcessingImage ? (
+                     <div className="flex flex-col items-center gap-2">
+                       <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                       <span className="text-xs text-purple-400 font-semibold uppercase tracking-wide">Compressing...</span>
+                     </div>
+                   ) : isEditingFuture.thumbnail ? (
+                     <div className="space-y-3 w-full">
+                       <div className="relative w-full max-w-[240px] h-[135px] mx-auto rounded-lg overflow-hidden border border-white/20">
+                         <img 
+                           src={isEditingFuture.thumbnail} 
+                           alt="Thumbnail preview" 
+                           className="w-full h-full object-cover" 
+                           referrerPolicy="no-referrer"
+                         />
+                         <button 
+                           type="button"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setIsEditingFuture({ ...isEditingFuture, thumbnail: "" });
+                           }}
+                           className="absolute top-1.5 right-1.5 p-1 bg-black/80 hover:bg-red-600 text-white rounded-full transition-colors"
+                           title="Remove preview"
+                         >
+                           <X className="w-3.5 h-3.5" />
+                         </button>
+                       </div>
+                       <p className="text-[10px] text-white/50 tracking-wide font-mono">Image attached. Drag another file or click to replace.</p>
+                     </div>
+                   ) : (
+                     <div className="flex flex-col items-center gap-2">
+                       <div className="p-3 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20 transition-transform">
+                         <Upload className="w-5 h-5" />
+                       </div>
+                       <div>
+                         <p className="text-xs font-semibold text-white/80">Drag & drop preview image here</p>
+                         <p className="text-[10px] text-white/40 mt-1">or click to browse from files</p>
+                       </div>
+                     </div>
+                   )}
+                 </div>
+
+                 {/* Keep alternative URL paste as secondary choice */}
+                 <div className="flex items-center gap-2 py-1">
+                   <div className="h-px bg-white/10 flex-1" />
+                   <span className="text-[10px] uppercase text-white/30 font-semibold tracking-wider">or paste direct image URL</span>
+                   <div className="h-px bg-white/10 flex-1" />
+                 </div>
+
+                 <input 
+                   type="text"
+                   className="w-full bg-black border border-white/10 rounded-lg p-2.5 text-xs text-white" 
+                   value={isEditingFuture.thumbnail || ""} 
+                   onChange={(e) => setIsEditingFuture({...isEditingFuture, thumbnail: e.target.value})} 
+                   placeholder="Enter direct URL (e.g. YouTube thumbnail link)" 
+                 />
               </div>
             </div>
             <div className="flex justify-end gap-2">
@@ -848,19 +1556,6 @@ export default function AdminDashboard() {
             <div className="flex justify-center gap-4">
               <button onClick={() => setFutureToDelete(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
               <button onClick={confirmDeleteFuture} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-white">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {submissionToDelete && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-sm text-center">
-            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
-            <p className="mb-6">Are you sure you want to delete this record submission?</p>
-            <div className="flex justify-center gap-4">
-              <button onClick={() => setSubmissionToDelete(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
-              <button onClick={confirmDeleteSubmission} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-white">Delete</button>
             </div>
           </div>
         </div>
@@ -958,6 +1653,73 @@ export default function AdminDashboard() {
                 disabled={isSyncingSheets}
               >
                 {isSyncingSheets ? "Syncing..." : "Sync Now"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {profileToDelete && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-sm text-center">
+            <h2 className="text-xl font-bold mb-4 text-red-500">Delete Profile</h2>
+            <p className="mb-6 text-sm text-white/70">Are you sure you want to permanently delete profile <strong className="text-white">"{profileToDelete}"</strong>? <br/><br/>This deletes the database record, but not their Firebase Auth login.</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={() => setProfileToDelete(null)} className="px-4 py-2 rounded-xl text-white/60 hover:text-white transition-colors text-sm font-bold">Cancel</button>
+              <button onClick={confirmDeleteProfile} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl font-bold text-white transition-colors text-sm shadow-lg shadow-red-600/20">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {submissionWithComment && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto w-full h-full">
+          <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-md">
+            <h2 className="text-xl font-bold mb-2 font-heading text-purple-400">
+              {submissionWithComment.action === "accept" ? "Accept Record Submission" : submissionWithComment.action === "reject" ? "Reject Record Submission" : "Delete Record Submission"}
+            </h2>
+            <div className="space-y-2 mb-4 bg-black/40 p-3 rounded-lg border border-white/5 text-xs text-white/70">
+              <p><strong>Player:</strong> {submissionWithComment.submission.username}</p>
+              <p><strong>Level Name:</strong> {submissionWithComment.submission.levelName}</p>
+              <p><strong>Progress:</strong> {submissionWithComment.submission.progress}%</p>
+              <p><strong>Video Proof:</strong> <a href={submissionWithComment.submission.videoProof} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline hover:text-blue-300">Open Link</a></p>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-xs uppercase text-white/50 mb-1">
+                {submissionWithComment.action === "accept" ? "Optional Comment for Player" : submissionWithComment.action === "reject" ? "Reason for Rejection (Highly Recommended)" : "Reason for Deletion (Optional)"}
+              </label>
+              <textarea
+                className="w-full bg-black border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500 h-24"
+                value={moderatorComment}
+                onChange={e => setModeratorComment(e.target.value)}
+                placeholder={submissionWithComment.action === "accept" ? "e.g. GG! Incredible run!" : submissionWithComment.action === "reject" ? "e.g. Video proof is missing the raw attempt/clicks, or incorrect details." : "e.g. Spam submission."}
+                required={submissionWithComment.action === "reject"}
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <button 
+                onClick={() => {
+                  setSubmissionWithComment(null);
+                  setModeratorComment("");
+                }}
+                className="px-4 py-2 rounded-xl text-white/60 hover:text-white text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmSubmissionAction}
+                disabled={submissionWithComment.action === "reject" && !moderatorComment.trim()}
+                className={`px-4 py-2 rounded-xl font-bold text-white text-sm transition-all ${
+                  submissionWithComment.action === "accept" 
+                    ? "bg-emerald-600 hover:bg-emerald-500" 
+                    : submissionWithComment.action === "reject"
+                    ? "bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                }`}
+              >
+                Confirm Decision
               </button>
             </div>
           </div>

@@ -10,6 +10,7 @@ export interface Level {
   video: string;
   isActive: boolean;
   thumbnail?: string; // Optioanl thumbnail from youtube
+  geometryDashId: string; // Real GD ID of the level
 }
 
 export interface FutureLevel {
@@ -18,6 +19,7 @@ export interface FutureLevel {
   creator: string;
   video: string;
   status: string; // e.g. "Verifying", "Building", "Layout"
+  thumbnail?: string;
 }
 
 export interface Verifier {
@@ -64,6 +66,7 @@ export interface UserProfile {
   gdUsername?: string;
   description?: string;
   country?: string;
+  role?: "user" | "moderator" | "elder_moder" | "admin";
 }
 
 export interface ChangelogItem {

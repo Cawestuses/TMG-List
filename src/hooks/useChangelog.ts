@@ -25,7 +25,8 @@ export function useChangelog() {
 
     if (!isFetching) {
       isFetching = true;
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+      const envUrl = import.meta.env.VITE_API_URL || "";
+      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
       fetch(`${API_BASE_URL}/api/changelog`)
         .then(res => res.json())
         .then((data: ChangelogItem[]) => {

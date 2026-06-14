@@ -15,8 +15,8 @@ service cloud.firestore {
     function existing() { return resource.data; }
 
     function isValidLevel(data) {
-      return data.size() >= 10 && data.size() <= 11
-        && data.keys().hasAll(['id', 'rank', 'name', 'difficulty', 'points', 'creator', 'verifier', 'victors', 'video', 'isActive'])
+      return data.size() >= 11 && data.size() <= 12
+        && data.keys().hasAll(['id', 'rank', 'name', 'difficulty', 'points', 'creator', 'verifier', 'victors', 'video', 'isActive', 'geometryDashId'])
         && data.id is string && data.id.size() <= 100
         && data.rank is number
         && data.name is string && data.name.size() <= 100
@@ -27,6 +27,7 @@ service cloud.firestore {
         && data.victors is number
         && data.video is string && data.video.size() <= 200
         && data.isActive is bool
+        && data.geometryDashId is string && data.geometryDashId.size() <= 50
         && (data.keys().hasAll(['thumbnail']) == false || (data.thumbnail is string && data.thumbnail.size() <= 200));
     }
 
@@ -57,6 +58,14 @@ service cloud.firestore {
       allow read, write: if true;
     }
     match /user_profiles/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /moderator_logs/{logId} {
       allow read: if true;
       allow write: if true;
     }

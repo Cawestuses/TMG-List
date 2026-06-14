@@ -96,7 +96,7 @@ export default function Home() {
                           <span className="font-mono font-bold text-[#ec4899]">{level.points}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-zinc-500">{t("levels.creatorVerifier")}</span>
+                          <span className="text-zinc-500">{t("levels.creator", "Creator")}</span>
                           <span className="text-zinc-300">{level.creator}</span>
                         </div>
                       </div>
