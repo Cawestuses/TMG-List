@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { handleFirestoreError, OperationType } from "@/lib/firebaseError";
+import logoImg from "../../../logo.png"; // Три точки вверх, чтобы выйти из src/components/layout в корень
 
 const navItems = [
   { key: "nav.demonList", path: "/top", icon: Trophy },
@@ -74,7 +75,7 @@ export function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <img 
-              src="./logo.png"
+              src="{logoImg}"
               alt="TMG Demon List Logo" 
               className="h-8 w-auto object-contain transform group-hover:scale-105 transition-transform duration-300" 
             />
