@@ -32,7 +32,8 @@ export function useLevels() {
     if (!isFetching) {
       isFetching = true;
       const envUrl = import.meta.env.VITE_API_URL || "";
-      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+      const isLocalOrCloudRun = typeof window !== "undefined" && (window.location.hostname.includes("run.app") || window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1"));
+      const API_BASE_URL = (envUrl.includes("onrender.com") || isLocalOrCloudRun) ? "" : envUrl;
       fetch(`${API_BASE_URL}/api/levels`)
         .then(res => res.json())
         .then((data: Level[]) => {

@@ -12,7 +12,10 @@ const app = express();
 app.set('trust proxy', 1 /* number of proxies between user and server */);
 
 app.use(cors({
-  origin: [/vercel\.app$/, 'http://localhost:5173'],
+  origin: (origin, callback) => {
+    // Allow any origin to prevent CORS NetworkErrors on preview, production, and dev domains
+    callback(null, true);
+  },
   credentials: true
 }));
 const PORT = Number(process.env.PORT) || 3000;

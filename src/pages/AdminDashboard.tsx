@@ -11,6 +11,12 @@ import { updateLevelsCache } from "../hooks/useLevels";
 import { updateFutureLevelsCache } from "../hooks/useFutureLevels";
 import { Upload, Image as ImageIcon, X, Trash2 } from "lucide-react";
 
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL || "";
+  const isLocalOrCloudRun = typeof window !== "undefined" && (window.location.hostname.includes("run.app") || window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1"));
+  return (envUrl.includes("onrender.com") || isLocalOrCloudRun) ? "" : envUrl;
+};
+
 export default function AdminDashboard() {
   const { user, isAdmin, isElderModer, isModerator, role: userRole, loading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "submissions" | "users" | "changelog" | "logs">("levels");
@@ -184,8 +190,7 @@ export default function AdminDashboard() {
     const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as FutureLevel));
     setFutureLevels(data);
     updateFutureLevelsCache(data);
-    const envUrl = import.meta.env.VITE_API_URL || "";
-    const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+    const API_BASE_URL = getApiBaseUrl();
     fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
   };
 
@@ -213,9 +218,8 @@ export default function AdminDashboard() {
       await batch.commit();
       setLevelToDelete(null);
       await loadLevels();
-      const envUrl = import.meta.env.VITE_API_URL || "";
-      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
-      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
+      const API_BASE_URL = getApiBaseUrl();
+      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
     }
   };
 
@@ -297,9 +301,8 @@ export default function AdminDashboard() {
           if (lvl.victors !== count) {
             await updateDoc(doc(db, "levels", lvl.id), { victors: count });
             await loadLevels(); // Refresh the list for Admin Dashboard
-            const envUrl = import.meta.env.VITE_API_URL || "";
-            const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
-            if (API_BASE_URL) fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
+            const API_BASE_URL = getApiBaseUrl();
+            fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
           }
         }
       }
@@ -376,9 +379,8 @@ export default function AdminDashboard() {
           timestamp: new Date().toISOString()
         });
         await loadLevels();
-        const envUrl = import.meta.env.VITE_API_URL || "";
-        const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
-        fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
+        const API_BASE_URL = getApiBaseUrl();
+        fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
         alert(`Ranks and points successfully fixed for ${updatedCount} levels!`);
       } else {
         alert("All levels already have the correct ranks and points.");
@@ -400,9 +402,8 @@ export default function AdminDashboard() {
       await deleteDoc(doc(db, "changelog", changelogToDelete));
       setChangelogToDelete(null);
       await loadChangelogs();
-      const envUrl = import.meta.env.VITE_API_URL || "";
-      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
-      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
+      const API_BASE_URL = getApiBaseUrl();
+      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
     }
   };
 
@@ -416,9 +417,8 @@ export default function AdminDashboard() {
       });
       setIsEditingChangelog(null);
       await loadChangelogs();
-      const envUrl = import.meta.env.VITE_API_URL || "";
-      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
-      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' });
+      const API_BASE_URL = getApiBaseUrl();
+      fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
     } catch (err) {
       console.error(err);
       alert("Failed to save changelog.");
@@ -550,8 +550,7 @@ export default function AdminDashboard() {
 
       setIsEditingLevel(null);
       await loadLevels();
-      const envUrl = import.meta.env.VITE_API_URL || "";
-      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+      const API_BASE_URL = getApiBaseUrl();
       fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
     } catch (err) {
       console.error(err);
@@ -665,8 +664,7 @@ export default function AdminDashboard() {
     setIsSyncingSheets(true);
     setSyncLogs("Connecting and loading data from Google Sheets...\n");
     try {
-      const envUrl = import.meta.env.VITE_API_URL || "";
-      const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+      const API_BASE_URL = getApiBaseUrl();
       const res = await fetch(`${API_BASE_URL}/api/sync-sheets`, {
         method: "POST",
         headers: {

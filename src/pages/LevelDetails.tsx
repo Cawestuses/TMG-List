@@ -64,7 +64,8 @@ export default function LevelDetails() {
             try {
               await updateDoc(doc(db, "levels", level.id), { victors: accepted100s });
               const envUrl = import.meta.env.VITE_API_URL || "";
-              const API_BASE_URL = envUrl.includes("onrender.com") ? "" : envUrl;
+              const isLocalOrCloudRun = typeof window !== "undefined" && (window.location.hostname.includes("run.app") || window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1"));
+              const API_BASE_URL = (envUrl.includes("onrender.com") || isLocalOrCloudRun) ? "" : envUrl;
               if (API_BASE_URL) {
                 fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
               }
