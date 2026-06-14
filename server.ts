@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { initializeApp, deleteApp } from "firebase/app";
 import { initializeFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import rateLimit from "express-rate-limit";
@@ -389,6 +388,8 @@ async function generateOpenGraphHtml(html: string, url: string) {
 
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
+    
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "custom", // Use custom so we can intercept HTML
@@ -422,11 +423,9 @@ async function startServer() {
   }
 
   if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
-    if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-      app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-      });
-    }
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
   }
 }
 
