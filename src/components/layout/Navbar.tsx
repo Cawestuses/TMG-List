@@ -114,7 +114,7 @@ export function Navbar() {
             {user ? (
               <div className="flex items-center gap-3">
                 {(isAdmin || isElderModer || isModerator) && (
-                  <Link to="/admin" className="p-2 text-purple-400 hover:text-purple-300 hover:bg-white/5 rounded-md transition-colors" title="Admin Dashboard">
+                  <Link to="/admin" className="p-2 text-purple-400 hover:text-purple-300 hover:bg-white/5 rounded-md transition-colors" title={t("navbar.adminDashboard") }>
                     <Settings className="w-4 h-4" />
                   </Link>
                 )}
@@ -132,7 +132,7 @@ export function Navbar() {
                       "p-2 rounded-md transition-colors relative focus:outline-none",
                       showNotifications ? "text-purple-400 bg-white/5" : "text-zinc-400 hover:text-white hover:bg-white/5"
                     )}
-                    title="Notifications"
+                    title={t("navbar.notifications")}
                   >
                     <Bell className="w-4 h-4" />
                     {unreadCount > 0 && (
@@ -143,9 +143,9 @@ export function Navbar() {
                   {showNotifications && (
                     <div className="absolute right-0 mt-2 w-80 bg-zinc-950/95 border border-white/10 rounded-xl shadow-2xl p-4 z-50 text-xs text-white max-h-96 overflow-y-auto backdrop-blur-xl">
                       <div className="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
-                        <span className="font-bold tracking-wide text-[10px] uppercase text-zinc-400">Notifications</span>
+                        <span className="font-bold tracking-wide text-[10px] uppercase text-zinc-400">{t("notifications.title")}</span>
                         {unreadCount > 0 && (
-                          <button onClick={markAllAsRead} className="text-[10px] text-purple-400 hover:underline">Mark all as read</button>
+                          <button onClick={markAllAsRead} className="text-[10px] text-purple-400 hover:underline">{t("notifications.markAllAsRead")}</button>
                         )}
                       </div>
                       <div className="space-y-3">
@@ -178,7 +178,7 @@ export function Navbar() {
                           </div>
                         ))}
                         {notifications.length === 0 && (
-                          <p className="text-center py-6 text-zinc-500">No notifications yet.</p>
+                          <p className="text-center py-6 text-zinc-500">{t("notifications.noNotifications")}</p>
                         )}
                       </div>
                     </div>

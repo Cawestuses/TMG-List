@@ -6,6 +6,7 @@ import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, updateDoc, que
 import { db } from "../lib/firebase";
 import { Level, Verifier, FutureLevel, RecordSubmission, ChangelogItem } from "../types";
 import { Navigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { calculatePointsForRank } from "../hooks/usePlayers";
 import { updateLevelsCache } from "../hooks/useLevels";
 import { updateFutureLevelsCache } from "../hooks/useFutureLevels";
@@ -20,6 +21,7 @@ const getApiBaseUrl = () => {
 
 export default function AdminDashboard() {
   const { user, isAdmin, isElderModer, isModerator, role: userRole, loading, logout } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "submissions" | "users" | "changelog" | "logs">("levels");
   
   const [changelogs, setChangelogs] = useState<ChangelogItem[]>([]);
@@ -701,7 +703,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading) return <div className="min-h-screen text-white pt-32 text-center">Loading...</div>;
+  if (loading) return <div className="min-h-screen text-white pt-32 text-center">{t("common.loading", "Loading...")}</div>;
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -710,10 +712,10 @@ export default function AdminDashboard() {
   if (!hasAccess) {
     return (
       <div className="min-h-screen pt-32 text-center text-white">
-        <h1 className="text-3xl font-bold mb-6">Access Denied</h1>
-        <p className="mb-6">You do not have administrative privileges.</p>
+        <h1 className="text-3xl font-bold mb-6">{t("admin.accessDenied")}</h1>
+        <p className="mb-6">{t("admin.accessDeniedMessage")}</p>
         <button onClick={logout} className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl">
-          Sign out
+          {t("admin.signOut")}
         </button>
       </div>
     );
@@ -722,10 +724,10 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen pt-32 text-white px-4 md:px-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold font-heading">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold font-heading">{t("admin.title")}</h1>
         <div className="flex items-center gap-4">
           <span className="text-white/60 text-sm">{user.email?.replace('@obsidian.local', '')}</span>
-          <button onClick={logout} className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm">Sign out</button>
+          <button onClick={logout} className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm">{t("admin.signOut")}</button>
         </div>
       </div>
 
@@ -734,25 +736,25 @@ export default function AdminDashboard() {
           onClick={() => setActiveTab("levels")}
           className={`px-4 py-2 font-bold transition-colors ${activeTab === "levels" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
         >
-          Levels
+          {t("admin.tabs.levels")}
         </button>
         <button 
           onClick={() => setActiveTab("future")}
           className={`px-4 py-2 font-bold transition-colors ${activeTab === "future" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
         >
-          Future List
+          {t("admin.tabs.future")}
         </button>
         <button 
           onClick={() => setActiveTab("verifiers")}
           className={`px-4 py-2 font-bold transition-colors ${activeTab === "verifiers" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
         >
-          Verifiers
+          {t("admin.tabs.verifiers")}
         </button>
         <button 
           onClick={() => setActiveTab("submissions")}
           className={`px-4 py-2 font-bold transition-colors ${activeTab === "submissions" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
         >
-          Submissions
+          {t("admin.tabs.submissions")}
         </button>
         {(isElderModer || isAdmin) && (
           <>
@@ -760,13 +762,13 @@ export default function AdminDashboard() {
               onClick={() => setActiveTab("users")}
               className={`px-4 py-2 font-bold transition-colors ${activeTab === "users" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
             >
-              Users
+              {t("admin.tabs.users")}
             </button>
             <button 
               onClick={() => setActiveTab("logs")}
               className={`px-4 py-2 font-bold transition-colors ${activeTab === "logs" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
             >
-              Logs
+              {t("admin.tabs.logs")}
             </button>
           </>
         )}
@@ -774,7 +776,7 @@ export default function AdminDashboard() {
           onClick={() => setActiveTab("changelog")}
           className={`px-4 py-2 font-bold transition-colors ${activeTab === "changelog" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
         >
-          Changelog
+          {t("admin.tabs.changelog")}
         </button>
       </div>
 
@@ -787,26 +789,26 @@ export default function AdminDashboard() {
               })} 
               className="px-4 py-2 bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/30 rounded-lg text-sm font-bold uppercase"
             >
-              + Add New Level
+              {t("admin.levels.addButton")}
             </button>
             <button 
               onClick={() => setIsImporting(true)}
               className="px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg text-sm font-bold uppercase"
             >
-              Import JSON
+              {t("admin.levels.importJSON")}
             </button>
             <button 
               onClick={() => setIsSheetsModalOpen(true)}
               className="px-4 py-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-sm font-bold uppercase"
             >
-              Sync from Google Sheets
+              {t("admin.levels.syncSheets")}
             </button>
             <button 
               onClick={fixRanksAndPoints}
               disabled={isFixingRanks}
               className="px-4 py-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-bold uppercase disabled:opacity-50"
             >
-              {isFixingRanks ? "Fixing..." : "Fix Ranks & Points"}
+              {isFixingRanks ? t("admin.levels.fixing") : t("admin.levels.fixRanks")}
             </button>
           </div>
 
@@ -814,12 +816,12 @@ export default function AdminDashboard() {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-white/10 bg-black/40">
-                  <th className="p-4">Rank</th>
-                  <th className="p-4">Name</th>
-                  <th className="p-4">Creator / Verifier</th>
-                  <th className="p-4">Points</th>
-                  <th className="p-4">Active</th>
-                  <th className="p-4 text-right">Actions</th>
+                  <th className="p-4">{t("admin.levels.rank")}</th>
+                  <th className="p-4">{t("admin.levels.name")}</th>
+                  <th className="p-4">{t("admin.levels.creatorVerifier")}</th>
+                  <th className="p-4">{t("admin.levels.points")}</th>
+                  <th className="p-4">{t("admin.levels.active")}</th>
+                  <th className="p-4 text-right">{t("admin.levels.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -830,11 +832,11 @@ export default function AdminDashboard() {
                     <td className="p-4 text-white/60">{level.creator} / {level.verifier}</td>
                     <td className="p-4">{level.points}</td>
                     <td className="p-4">
-                       {level.isActive ? <span className="text-emerald-400 text-xs">ACTIVE</span> : <span className="text-zinc-500 text-xs">INACTIVE</span>}
+                       {level.isActive ? <span className="text-emerald-400 text-xs">{t("admin.levels.activeStatus")}</span> : <span className="text-zinc-500 text-xs">{t("admin.levels.inactiveStatus")}</span>}
                     </td>
                     <td className="p-4 text-right">
-                      <button onClick={() => setIsEditingLevel({...level})} className="text-blue-400 hover:underline mr-4">Edit</button>
-                      <button onClick={() => handleDeleteLevel(level.id)} className="text-red-400 hover:underline">Delete</button>
+                      <button onClick={() => setIsEditingLevel({...level})} className="text-blue-400 hover:underline mr-4">{t("admin.levels.edit")}</button>
+                      <button onClick={() => handleDeleteLevel(level.id)} className="text-red-400 hover:underline">{t("admin.levels.delete")}</button>
                     </td>
                   </tr>
                 ))}
@@ -858,13 +860,13 @@ export default function AdminDashboard() {
               })} 
               className="px-4 py-2 bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/30 rounded-lg text-sm font-bold uppercase"
             >
-              + Add Future Level
+              {t("admin.future.addButton")}
             </button>
             <button 
               onClick={() => setIsImportingFuture(true)}
               className="px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg text-sm font-bold uppercase"
             >
-              Import JSON
+              {t("admin.future.importJSON")}
             </button>
           </div>
 
@@ -872,10 +874,10 @@ export default function AdminDashboard() {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-white/10 bg-black/40">
-                  <th className="p-4">Name</th>
-                  <th className="p-4">Creator / Verifier</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 text-right">Actions</th>
+                  <th className="p-4">{t("admin.future.name")}</th>
+                  <th className="p-4">{t("admin.future.creatorVerifier")}</th>
+                  <th className="p-4">{t("admin.future.status")}</th>
+                  <th className="p-4 text-right">{t("admin.future.actions")}</th>
                 </tr>
               </thead>
               <tbody>

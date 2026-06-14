@@ -103,6 +103,132 @@ const resources = {
         a3: "You must provide full, uncut video proof of your completion with clicks/taps audible. Cheat indicators like Megahack must be visible if used.",
         q4: "How is difficulty determined?",
         a4: "Difficulty is determined by our team of experienced players and verifiers, who playtest levels and compare them to the current rankings."
+      },
+      admin: {
+        title: "Admin Dashboard",
+        accessDenied: "Access Denied",
+        accessDeniedMessage: "You do not have administrative privileges.",
+        signOut: "Sign out",
+        tabs: {
+          levels: "Levels",
+          future: "Future List",
+          verifiers: "Verifiers",
+          submissions: "Submissions",
+          users: "Users",
+          logs: "Logs",
+          changelog: "Changelog"
+        },
+        levels: {
+          addButton: "+ Add New Level",
+          importJSON: "Import JSON",
+          syncSheets: "Sync from Google Sheets",
+          fixRanks: "Fix Ranks & Points",
+          fixing: "Fixing...",
+          rank: "Rank",
+          name: "Name",
+          creatorVerifier: "Creator / Verifier",
+          points: "Points",
+          active: "Active",
+          actions: "Actions",
+          activeStatus: "ACTIVE",
+          inactiveStatus: "INACTIVE",
+          edit: "Edit",
+          delete: "Delete",
+          noItems: "No levels found. Try clicking 'Sync from Data Sheet'."
+        },
+        future: {
+          addButton: "+ Add Future Level",
+          importJSON: "Import JSON",
+          name: "Name",
+          creatorVerifier: "Creator / Verifier",
+          status: "Status",
+          actions: "Actions",
+          noItems: "No future levels found."
+        },
+        verifiers: {
+          addButton: "+ Add New Verifier",
+          id: "ID",
+          name: "Name",
+          actions: "Actions",
+          noItems: "No verifiers found."
+        },
+        submissions: {
+          date: "Date",
+          user: "User",
+          level: "Level",
+          progress: "Progress",
+          status: "Status",
+          video: "Video",
+          actions: "Actions",
+          link: "Link",
+          accept: "Accept",
+          reject: "Reject",
+          delete: "Delete",
+          noItems: "No record submissions found."
+        },
+        users: {
+          title: "User Roles & Profiles",
+          subtitle: "Manage user roles dynamically. Changes take effect instantly across the application.",
+          searchPlaceholder: "Search by username...",
+          profileId: "Profile ID",
+          details: "User Details",
+          gdUsernameCountry: "GD Username / Country",
+          claimedBy: "Claimed By",
+          currentRole: "Current Role",
+          noDescription: "No description",
+          na: "N/A",
+          claimed: "Claimed:",
+          unclaimed: "Unclaimed",
+          user: "User",
+          moderator: "Moderator",
+          elderModer: "Elder Moder",
+          admin: "Admin"
+        },
+        logs: {
+          title: "Moderation Action Logs",
+          subtitle: "Audit log of all actions taken by list coordinators and moderators.",
+          refresh: "Refresh Logs",
+          timestamp: "Timestamp",
+          moderator: "Moderator",
+          action: "Action",
+          details: "Details",
+          noItems: "No moderator logs available."
+        },
+        changelog: {
+          addButton: "+ Add Changelog",
+          date: "Date",
+          content: "Content",
+          actions: "Actions",
+          noItems: "No changelog entries found."
+        },
+        modal: {
+          editLevel: "Edit Level",
+          newLevel: "New Level",
+          id: "ID",
+          gdId: "Geometry Dash ID",
+          rank: "Rank",
+          points: "Points",
+          name: "Name",
+          difficulty: "Difficulty",
+          creator: "Creator",
+          verifier: "Verifier",
+          victors: "Victors",
+          videoUrl: "Video URL / #",
+          preview: "Level Preview (Thumbnail)",
+          compressing: "Compressing..."
+        }
+      },
+      common: {
+        loading: "Loading..."
+      },
+      navbar: {
+        adminDashboard: "Admin Dashboard",
+        notifications: "Notifications"
+      },
+      notifications: {
+        title: "Notifications",
+        markAllAsRead: "Mark all as read",
+        noNotifications: "No notifications yet."
       }
     }
   },
@@ -207,6 +333,132 @@ const resources = {
         a3: "Вам необходимо приложить полное, необрезанное видеодоказательство вашего прохождения со слышимыми кликами (нажатиями). Если вы играете с модами (Megahack), чит-индикаторы должны быть обязательно выведены на экран.",
         q4: "Как определяется сложность новых уровней?",
         a4: "Сложность оценивается нашей командой опытных верифаеров и игроков, которые тестируют уровни на практике и сравнивают их с уже расставленным топом."
+      },
+      admin: {
+        title: "Админ Панель",
+        accessDenied: "Доступ запрещён",
+        accessDeniedMessage: "У вас нет административных прав.",
+        signOut: "Выйти",
+        tabs: {
+          levels: "Уровни",
+          future: "Будущий Лист",
+          verifiers: "Верифаеры",
+          submissions: "Рекорды",
+          users: "Пользователи",
+          logs: "Логи",
+          changelog: "Ченджлог"
+        },
+        levels: {
+          addButton: "+ Добавить уровень",
+          importJSON: "Импорт JSON",
+          syncSheets: "Синхронизировать из Google Sheets",
+          fixRanks: "Исправить ранги и очки",
+          fixing: "Исправление...",
+          rank: "Ранг",
+          name: "Название",
+          creatorVerifier: "Креатор / Верифаер",
+          points: "Очки",
+          active: "Активно",
+          actions: "Действия",
+          activeStatus: "АКТИВЕН",
+          inactiveStatus: "НЕАКТИВЕН",
+          edit: "Редактировать",
+          delete: "Удалить",
+          noItems: "Уровни не найдены. Попробуйте нажать 'Sync from Data Sheet'."
+        },
+        future: {
+          addButton: "+ Добавить будущий уровень",
+          importJSON: "Импорт JSON",
+          name: "Название",
+          creatorVerifier: "Креатор / Верифаер",
+          status: "Статус",
+          actions: "Действия",
+          noItems: "Будущие уровни не найдены."
+        },
+        verifiers: {
+          addButton: "+ Добавить верифаера",
+          id: "ID",
+          name: "Имя",
+          actions: "Действия",
+          noItems: "Верифаеры не найдены."
+        },
+        submissions: {
+          date: "Дата",
+          user: "Игрок",
+          level: "Уровень",
+          progress: "Прогресс",
+          status: "Статус",
+          video: "Видео",
+          actions: "Действия",
+          link: "Ссылка",
+          accept: "Принять",
+          reject: "Отклонить",
+          delete: "Удалить",
+          noItems: "Рекорды не найдены."
+        },
+        users: {
+          title: "Роли и профили пользователей",
+          subtitle: "Управляйте ролями пользователей. Изменения вступают в силу сразу.",
+          searchPlaceholder: "Поиск по никнейму...",
+          profileId: "ID профиля",
+          details: "Пользователь",
+          gdUsernameCountry: "GD ник / Страна",
+          claimedBy: "Заявлен",
+          currentRole: "Текущая роль",
+          noDescription: "Нет описания",
+          na: "N/A",
+          claimed: "Заявлено:",
+          unclaimed: "Не заявлено",
+          user: "Пользователь",
+          moderator: "Модератор",
+          elderModer: "Старший модератор",
+          admin: "Админ"
+        },
+        logs: {
+          title: "Логи модерации",
+          subtitle: "Аудит всех действий координаторов и модераторов.",
+          refresh: "Обновить логи",
+          timestamp: "Время",
+          moderator: "Модератор",
+          action: "Действие",
+          details: "Детали",
+          noItems: "Логи модерации отсутствуют."
+        },
+        changelog: {
+          addButton: "+ Добавить запись",
+          date: "Дата",
+          content: "Содержимое",
+          actions: "Действия",
+          noItems: "Записи ченджлога не найдены."
+        },
+        modal: {
+          editLevel: "Редактировать уровень",
+          newLevel: "Новый уровень",
+          id: "ID",
+          gdId: "Geometry Dash ID",
+          rank: "Ранг",
+          points: "Очки",
+          name: "Название",
+          difficulty: "Сложность",
+          creator: "Создатель",
+          verifier: "Верифаер",
+          victors: "Прошедшие",
+          videoUrl: "Ссылка на видео / #",
+          preview: "Превью уровня (миниатюра)",
+          compressing: "Сжатие..."
+        }
+      },
+      common: {
+        loading: "Загрузка..."
+      },
+      navbar: {
+        adminDashboard: "Админ Панель",
+        notifications: "Уведомления"
+      },
+      notifications: {
+        title: "Уведомления",
+        markAllAsRead: "Пометить все как прочитанные",
+        noNotifications: "Нет уведомлений."
       }
     }
   }
