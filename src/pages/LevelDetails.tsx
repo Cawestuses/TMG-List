@@ -100,7 +100,7 @@ export default function LevelDetails() {
             />
           ) : (
             /* Fallback pattern if no thumbnail */
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-400 via-[#050507] to-[#050507]" />
+            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#d2c89e] via-[#050507] to-[#050507]" />
           )}
         </div>
         
@@ -108,10 +108,10 @@ export default function LevelDetails() {
         
         <div className="absolute bottom-0 left-0 p-8 flex flex-col justify-end w-full">
           <div className="flex items-center gap-4 mb-4">
-            <span className="px-3 py-1 rounded-full bg-[#fb923c]/20 text-[#fb923c] border border-[#fb923c]/30 text-sm font-bold tracking-wide">
+            <span className="px-3 py-1 rounded-full bg-[#d3c79d]/20 text-[#d3c79d] border border-[#d3c79d]/30 text-sm font-bold tracking-wide">
               #{level.rank}
             </span>
-            <span className="px-3 py-1 rounded-full bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30 text-sm font-bold tracking-wide flex items-center gap-1">
+            <span className="px-3 py-1 rounded-full bg-[#cfbe94]/20 text-[#cfbe94] border border-[#cfbe94]/30 text-sm font-bold tracking-wide flex items-center gap-1">
               <Trophy className="w-3 h-3" /> {level.points.toFixed(1)} {t("levels.pointsLabel")}
             </span>
           </div>
@@ -155,15 +155,15 @@ export default function LevelDetails() {
                 {submissions.map((submission) => (
                   <div key={submission.id} className="p-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between group">
                     <div>
-                      <Link to={`/player/${encodeURIComponent(submission.username)}`} className="font-bold text-lg hover:text-orange-300 transition-colors cursor-pointer block">{submission.username}</Link>
+                      <Link to={`/player/${encodeURIComponent(submission.username)}`} className="font-bold text-lg hover:text-[#cfbe94] transition-colors cursor-pointer block">{submission.username}</Link>
                       <div className="text-sm text-zinc-400 flex items-center gap-2">
-                        <span className="text-[#f59e0b] font-medium">{submission.progress}%</span>
+                        <span className="text-[#cfbe94] font-medium">{submission.progress}%</span>
                         &bull;
                         <span className="uppercase text-[10px] tracking-wider">{submission.status}</span>
                       </div>
                     </div>
                     <a href={submission.videoProof} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                      <Video className="w-5 h-5 text-white/60 group-hover:text-amber-400 transition-colors" />
+                      <Video className="w-5 h-5 text-white/60 group-hover:text-[#d8d0b6] transition-colors" />
                     </a>
                   </div>
                 ))}
@@ -184,25 +184,25 @@ export default function LevelDetails() {
                 <div className="flex items-center gap-2 text-zinc-400">
                   <User className="w-4 h-4" /> {t("levels.creatorVerifier").split(' / ')[0]}
                 </div>
-                <Link to={`/player/${encodeURIComponent(level.creator)}`} className="font-medium hover:text-orange-300 transition-colors">{level.creator}</Link>
+                <Link to={`/player/${encodeURIComponent(level.creator)}`} className="font-medium hover:text-[#cfbe94] transition-colors">{level.creator}</Link>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 text-zinc-400">
                   <ShieldCheck className="w-4 h-4" /> {t("levels.creatorVerifier").split(' / ')[1]}
                 </div>
-                <Link to={`/player/${encodeURIComponent(level.verifier)}`} className="font-medium text-[#fbbf24] hover:text-orange-300 transition-colors">{level.verifier}</Link>
+                <Link to={`/player/${encodeURIComponent(level.verifier)}`} className="font-medium text-[#d3c79d] hover:text-[#cfbe94] transition-colors">{level.verifier}</Link>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 text-zinc-400">
                   <Hash className="w-4 h-4" /> {t("levels.geometryDashId", "Geometry Dash ID")}
                 </div>
-                <div className="font-mono text-orange-300 font-bold">{level.geometryDashId || "N/A"}</div>
+                <div className="font-mono text-[#cfbe94] font-bold">{level.geometryDashId || "N/A"}</div>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 text-zinc-400">
                   <Trophy className="w-4 h-4" /> {t("levels.victors")}
                 </div>
-                <div className="font-mono text-[#fb923c] font-bold">{localVictors !== null ? localVictors : level.victors}</div>
+                <div className="font-mono text-[#d3c79d] font-bold">{localVictors !== null ? localVictors : level.victors}</div>
               </div>
             </div>
           </GlowCard>

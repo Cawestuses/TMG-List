@@ -29,7 +29,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pt-12 pb-20 lg:pt-24 lg:pb-32 overflow-hidden text-center">
         {/* Background Gradients */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-[#fb923c]/10 via-[#f97316]/20 to-[#f59e0b]/10 blur-[100px] rounded-full point-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-[#d3c79d]/10 via-[#d8d0b6]/20 to-[#cfbe94]/10 blur-[100px] rounded-full point-events-none" />
         
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -40,7 +40,7 @@ export default function Home() {
           <div className="h-4" />
           
           <h1 className="text-5xl md:text-7xl font-heading font-black tracking-tighter">
-            <span dangerouslySetInnerHTML={{ __html: t("home.title").replace('Geometry Dash', '<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#f59e0b] via-[#fb923c] to-[#f97316]">GEOMETRY DASH</span>') }} />
+            <span dangerouslySetInnerHTML={{ __html: t("home.title").replace('Geometry Dash', '<br /><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#cfbe94] via-[#d3c79d] to-[#d8d0b6]">GEOMETRY DASH</span>') }} />
           </h1>
           
           <p className="text-lg md:text-xl text-zinc-400 max-w-2xl">
@@ -66,7 +66,7 @@ export default function Home() {
         <div className="lg:col-span-2 space-y-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Trophy className="w-8 h-8 text-[#f97316]" />
+              <Trophy className="w-8 h-8 text-[#d8d0b6]" />
               <h2 className="text-3xl font-heading font-bold">{t("home.latestAdditions")}</h2>
             </div>
             <Link to="/top" className="text-zinc-400 hover:text-white transition-colors flex items-center gap-1 text-sm">
@@ -87,13 +87,13 @@ export default function Home() {
                       <div>
                         <div className="text-5xl font-black text-white/20 mb-2 font-heading">#{level.rank}</div>
                         <h3 className="text-2xl font-bold mb-1">{level.name}</h3>
-                        <p className="text-sm text-[#f59e0b] font-medium">{level.difficulty}</p>
+                        <p className="text-sm text-[#cfbe94] font-medium">{level.difficulty}</p>
                       </div>
                       
                       <div className="mt-6 space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-zinc-500">{t("levels.points")}</span>
-                          <span className="font-mono font-bold text-[#fb923c]">{level.points}</span>
+                          <span className="font-mono font-bold text-[#d3c79d]">{level.points}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-zinc-500">{t("levels.creator", "Creator")}</span>
@@ -111,7 +111,7 @@ export default function Home() {
         {/* Changelog Column */}
         <div className="space-y-8">
           <div className="flex items-center gap-3">
-            <History className="w-7 h-7 text-[#f59e0b]" />
+            <History className="w-7 h-7 text-[#cfbe94]" />
             <h2 className="text-3xl font-heading font-bold">Changelog</h2>
           </div>
           <GlowCard className="!p-0 overflow-hidden h-[300px] flex flex-col">
@@ -129,7 +129,7 @@ export default function Home() {
               ) : logs.length > 0 ? (
                 logs.map(log => (
                   <div key={log.id} className="flex gap-4 group">
-                    <div className="w-2 h-2 mt-2 rounded-full bg-[#f59e0b] group-hover:shadow-[0_0_10px_#f59e0b] transition-shadow" />
+                    <div className="w-2 h-2 mt-2 rounded-full bg-[#cfbe94] group-hover:shadow-[0_0_10px_#cfbe94] transition-shadow" />
                     <div>
                       <p className="text-sm font-medium text-white/90">{log.content}</p>
                       <p className="text-xs text-white/40 font-mono mt-1">{formatChangelogTime(log.date, userCountry)}</p>
@@ -147,9 +147,9 @@ export default function Home() {
       {/* Stats Grid */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: t("statistics.totalCompletions"), value: playersLoading ? "..." : players.reduce((sum, p) => sum + p.completedLevels, 0).toLocaleString(), icon: Swords, color: "text-[#fb923c]" },
-          { label: t("statistics.totalPlayers"), value: playersLoading ? "..." : players.length.toLocaleString(), icon: Users, color: "text-[#f59e0b]" },
-          { label: t("statistics.levelsRanked"), value: loading ? "..." : levels.length.toLocaleString(), icon: Activity, color: "text-[#fb923c]" },
+          { label: t("statistics.totalCompletions"), value: playersLoading ? "..." : players.reduce((sum, p) => sum + p.completedLevels, 0).toLocaleString(), icon: Swords, color: "text-[#d3c79d]" },
+          { label: t("statistics.totalPlayers"), value: playersLoading ? "..." : players.length.toLocaleString(), icon: Users, color: "text-[#cfbe94]" },
+          { label: t("statistics.levelsRanked"), value: loading ? "..." : levels.length.toLocaleString(), icon: Activity, color: "text-[#d3c79d]" },
           { label: t("statistics.activeCountries"), value: playersLoading ? "..." : new Set(players.map(p => p.country).filter(c => c && c !== "UN")).size, icon: Zap, color: "text-emerald-400" },
         ].map((stat, i) => (
           <div key={i} className="h-full">
