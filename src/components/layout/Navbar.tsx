@@ -8,7 +8,6 @@ import { useAuth } from "@/lib/auth";
 import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { handleFirestoreError, OperationType } from "@/lib/firebaseError";
-import logoImg from "../../../logo.png"; // Три точки вверх, чтобы выйти из src/components/layout в корень
 
 const navItems = [
   { key: "nav.demonList", path: "/top", icon: Trophy },
@@ -75,12 +74,12 @@ export function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <img 
-              src={logoImg}
+              src="logo.png" 
               alt="TMG Demon List Logo" 
               className="h-8 w-auto object-contain transform group-hover:scale-105 transition-transform duration-300" 
             />
             <span className="font-heading font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-              TMG <span className="text-[#d8d0b6] font-black italic">LIST</span>
+              TMG <span className="text-purple-400 font-black italic">LIST</span>
             </span>
           </Link>
 
@@ -104,7 +103,7 @@ export function Navbar() {
                     {isActive && (
                       <motion.div
                         layoutId="nav-pill"
-                        className="absolute inset-0 border border-[#cfbe94]/50 bg-[#cfbe94]/10 rounded-md -z-10"
+                        className="absolute inset-0 border border-[#a855f7]/50 bg-[#a855f7]/10 rounded-md -z-10"
                         transition={{ type: "spring", stiffness: 380, damping: 30 }}
                       />
                     )}
@@ -117,7 +116,7 @@ export function Navbar() {
             {user ? (
               <div className="flex items-center gap-3">
                 {(isAdmin || isElderModer || isModerator) && (
-                  <Link to="/admin" className="p-2 text-[#d8d0b6] hover:text-[#cfbe94] hover:bg-white/5 rounded-md transition-colors" title={t("navbar.adminDashboard") }>
+                  <Link to="/admin" className="p-2 text-purple-400 hover:text-purple-300 hover:bg-white/5 rounded-md transition-colors" title={t("navbar.adminDashboard") }>
                     <Settings className="w-4 h-4" />
                   </Link>
                 )}
@@ -133,13 +132,13 @@ export function Navbar() {
                     }}
                     className={cn(
                       "p-2 rounded-md transition-colors relative focus:outline-none",
-                      showNotifications ? "text-[#d8d0b6] bg-white/5" : "text-zinc-400 hover:text-white hover:bg-white/5"
+                      showNotifications ? "text-purple-400 bg-white/5" : "text-zinc-400 hover:text-white hover:bg-white/5"
                     )}
                     title={t("navbar.notifications")}
                   >
                     <Bell className="w-4 h-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2 h-2 bg-[#d8d0b6] rounded-full animate-pulse" />
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
                     )}
                   </button>
 
@@ -148,7 +147,7 @@ export function Navbar() {
                       <div className="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
                         <span className="font-bold tracking-wide text-[10px] uppercase text-zinc-400">{t("notifications.title")}</span>
                         {unreadCount > 0 && (
-                          <button onClick={markAllAsRead} className="text-[10px] text-[#d8d0b6] hover:underline">{t("notifications.markAllAsRead")}</button>
+                          <button onClick={markAllAsRead} className="text-[10px] text-purple-400 hover:underline">{t("notifications.markAllAsRead")}</button>
                         )}
                       </div>
                       <div className="space-y-3">
@@ -157,7 +156,7 @@ export function Navbar() {
                             key={notif.id} 
                             className={cn(
                               "p-2.5 rounded-lg border leading-relaxed",
-                              notif.read ? "bg-black/20 border-white/5 text-white/50" : "bg-[#645e49]/20 border-[#d8d0b6]/20 text-white"
+                              notif.read ? "bg-black/20 border-white/5 text-white/50" : "bg-purple-950/20 border-purple-500/20 text-white"
                             )}
                           >
                             <div className="flex justify-between items-start gap-2">
@@ -189,9 +188,9 @@ export function Navbar() {
                 </div>
                 <Link 
                   to={`/player/${encodeURIComponent(user.email?.split('@')[0] || '')}`} 
-                  className="px-3 py-1.5 bg-white/5 hover:bg-[#d8d0b6]/10 border border-white/10 hover:border-[#d8d0b6]/35 rounded-full text-xs text-white/90 hover:text-[#cfbe94] transition-all duration-300 flex items-center gap-2 max-w-[150px] shadow-sm shadow-[#d8d0b6]/5 hover:shadow-[#d8d0b6]/10"
+                  className="px-3 py-1.5 bg-white/5 hover:bg-purple-500/10 border border-white/10 hover:border-purple-500/35 rounded-full text-xs text-white/90 hover:text-purple-300 transition-all duration-300 flex items-center gap-2 max-w-[150px] shadow-sm shadow-purple-500/5 hover:shadow-purple-500/10"
                 >
-                  <User className="w-3.5 h-3.5 text-[#d8d0b6] shrink-0" />
+                  <User className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                   <span className="truncate font-semibold tracking-wide font-mono">{user.email?.split('@')[0]}</span>
                 </Link>
                 <button
@@ -268,7 +267,7 @@ export function Navbar() {
                   <Link
                     to="/admin"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-[#d8d0b6] hover:text-[#cfbe94] hover:bg-white/5"
+                    className="flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-purple-400 hover:text-purple-300 hover:bg-white/5"
                   >
                     <Settings className="w-5 h-5" />
                     Admin Dashboard
@@ -277,9 +276,9 @@ export function Navbar() {
                 <Link 
                   to={`/player/${encodeURIComponent(user.email?.split('@')[0] || '')}`}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2 text-base font-medium text-white/80 hover:text-[#d8d0b6] transition-colors"
+                  className="flex items-center gap-3 px-3 py-2 text-base font-medium text-white/80 hover:text-purple-400 transition-colors"
                 >
-                  <User className="w-5 h-5 text-[#d8d0b6] shrink-0" />
+                  <User className="w-5 h-5 text-purple-400 shrink-0" />
                   <span className="truncate">{user.email?.split('@')[0]}</span>
                 </Link>
                 <button

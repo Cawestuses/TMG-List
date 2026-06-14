@@ -106,7 +106,7 @@ export default function SubmitRecord() {
             <select 
               value={levelName}
               onChange={(e) => setLevelName(e.target.value)}
-              className="w-full bg-[#121214] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#d8d0b6]/50 transition-all backdrop-blur-sm font-sans text-sm appearance-none" 
+              className="w-full bg-[#121214] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500/50 transition-all backdrop-blur-sm font-sans text-sm appearance-none" 
               disabled={isSubmitting}
               required
             >
@@ -125,7 +125,7 @@ export default function SubmitRecord() {
               max="100" 
               value={progress}
               onChange={(e) => setProgress(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-300/50 transition-all backdrop-blur-sm font-mono text-sm" 
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 transition-all backdrop-blur-sm font-mono text-sm" 
               placeholder="100" 
               disabled={isSubmitting}
             />
@@ -137,7 +137,7 @@ export default function SubmitRecord() {
               type="url" 
               value={videoProof}
               onChange={(e) => setVideoProof(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#d8d0b6]/50 transition-all backdrop-blur-sm font-mono text-sm" 
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500/50 transition-all backdrop-blur-sm font-mono text-sm" 
               placeholder={t("submit.videoProofPlaceholder")} 
               disabled={isSubmitting}
             />
@@ -146,7 +146,7 @@ export default function SubmitRecord() {
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className="w-full py-4 bg-gradient-to-r from-[#d2c89e] to-[#d8d0b6] font-bold rounded-xl shadow-lg shadow-[#d8d0b6]/20 hover:shadow-[#d8d0b6]/40 hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0"
+            className="w-full py-4 bg-gradient-to-r from-purple-500 to-cyan-500 font-bold rounded-xl shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {isSubmitting ? "Submitting..." : t("submit.submitBtn")}
           </button>

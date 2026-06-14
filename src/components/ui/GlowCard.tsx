@@ -10,9 +10,9 @@ interface GlowCardProps {
 }
 
 const colorMap = {
-  primary: "from-[#d3c79d]/20 via-[#d8d0b6]/20 to-[#cfbe94]/20 border-[#d8d0b6]/30",
-  secondary: "from-[#cfbe94]/20 to-transparent border-[#cfbe94]/30",
-  accent: "from-[#d8d0b6]/20 to-transparent border-[#d8d0b6]/30",
+  primary: "from-[#ec4899]/20 via-[#a855f7]/20 to-[#06b6d4]/20 border-[#a855f7]/30",
+  secondary: "from-[#06b6d4]/20 to-transparent border-[#06b6d4]/30",
+  accent: "from-[#a855f7]/20 to-transparent border-[#a855f7]/30",
   red: "from-red-500/20 to-transparent border-red-500/30",
   green: "from-emerald-500/20 to-transparent border-emerald-500/30",
 };
