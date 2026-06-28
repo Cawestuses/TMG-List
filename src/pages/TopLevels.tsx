@@ -362,7 +362,7 @@ export default function TopLevels() {
               )}
             </AnimatePresence>
             
-            {!loading && filteredAndSortedLevels.length === 0 && (
+            {!loading && displayData.length === 0 && (
               <div className="text-center py-12 text-zinc-500">
                 {t("levels.noMatch")} "{search}"
               </div>

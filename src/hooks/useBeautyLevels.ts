@@ -41,6 +41,8 @@ export function useBeautyLevels() {
         isFetching = false;
       }).catch(err => {
         console.error("Failed to fetch beauty levels", err);
+        setLevels([]);
+        setLoading(false);
         isFetching = false;
       });
     }
