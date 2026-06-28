@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { calculatePointsForRank } from "../hooks/usePlayers";
 import { updateLevelsCache } from "../hooks/useLevels";
 import { updateFutureLevelsCache } from "../hooks/useFutureLevels";
+import { useSiteSettings } from "../hooks/useSiteSettings";
 import { Upload, Image as ImageIcon, X, Trash2 } from "lucide-react";
 import { handleFirestoreError, OperationType } from "../lib/firebaseError";
 
@@ -22,7 +23,7 @@ const getApiBaseUrl = () => {
 export default function AdminDashboard() {
   const { user, isAdmin, isElderModer, isModerator, role: userRole, loading, logout } = useAuth();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "submissions" | "users" | "changelog" | "logs">("levels");
+  const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "submissions" | "users" | "changelog" | "logs" | "settings">("levels");
   
   const [changelogs, setChangelogs] = useState<ChangelogItem[]>([]);
   const [isEditingChangelog, setIsEditingChangelog] = useState<ChangelogItem | null>(null);
@@ -69,6 +70,16 @@ export default function AdminDashboard() {
   const [moderatorComment, setModeratorComment] = useState("");
 
   const hasAccess = isAdmin || isElderModer || isModerator;
+
+  const { settings, updateSettings } = useSiteSettings();
+  const [logoInput, setLogoInput] = useState("");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  useEffect(() => {
+    if (settings.logoUrl !== undefined) {
+      setLogoInput(settings.logoUrl);
+    }
+  }, [settings]);
 
   useEffect(() => {
     if (hasAccess) {
@@ -183,6 +194,47 @@ export default function AdminDashboard() {
     } catch (err: any) {
       console.error(err);
       setProfileToDelete(null);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      await updateSettings({ logoUrl: logoInput });
+      
+      const logId = `log-${Date.now()}`;
+      await setDoc(doc(db, "moderator_logs", logId), {
+        id: logId,
+        moderatorEmail: user?.email || "",
+        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        action: "updated_settings",
+        details: `Updated site logo URL`,
+        timestamp: new Date().toISOString()
+      });
+      
+      alert("Settings saved successfully!");
+    } catch (err: any) {
+      alert("Failed to save settings: " + err.message);
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 700 * 1024) { // 700KB limit for firestore document (Base64 is ~33% larger)
+        alert("Файл слишком большой. Пожалуйста, сожмите картинку до 700KB или используйте URL.");
+        e.target.value = '';
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoInput(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
     }
   };
 
@@ -778,6 +830,14 @@ export default function AdminDashboard() {
         >
           {t("admin.tabs.changelog")}
         </button>
+        {isAdmin && (
+          <button 
+            onClick={() => setActiveTab("settings")}
+            className={`px-4 py-2 font-bold transition-colors ${activeTab === "settings" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
+          >
+            {t("admin.tabs.settings", "Настройки")}
+          </button>
+        )}
       </div>
 
       {activeTab === "levels" && (
@@ -1682,6 +1742,43 @@ export default function AdminDashboard() {
               <button onClick={confirmDeleteProfile} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl font-bold text-white transition-colors text-sm shadow-lg shadow-red-600/20">Delete</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === "settings" && isAdmin && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8 max-w-2xl">
+          <h2 className="text-xl font-bold mb-4 font-heading">{t("admin.tabs.settings", "Настройки")}</h2>
+          <div className="mb-6">
+            <label className="block text-sm font-bold text-white/60 mb-2">URL логотипа сайта (Site Logo URL)</label>
+            <input 
+              type="text" 
+              value={logoInput} 
+              onChange={e => setLogoInput(e.target.value)} 
+              placeholder="https://example.com/logo.png"
+              className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-[#d8d0b6] outline-none"
+            />
+            <p className="text-sm text-white/40 mt-2">Оставьте пустым, чтобы использовать текстовый логотип.</p>
+            <div className="mt-2">
+               <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors">
+                 <Upload className="w-4 h-4" />
+                 Загрузить картинку (до 700KB)
+                 <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+               </label>
+            </div>
+            {logoInput && (
+              <div className="mt-4 p-4 bg-black/40 border border-white/5 rounded-xl">
+                <p className="text-xs text-white/50 mb-2">Превью:</p>
+                <img src={logoInput} alt="Preview" className="h-12 w-auto object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} onLoad={(e) => (e.currentTarget.style.display = 'block')} />
+              </div>
+            )}
+          </div>
+          <button 
+            onClick={handleSaveSettings} 
+            disabled={isSavingSettings}
+            className="px-6 py-3 bg-[#d8d0b6] text-black font-bold rounded-xl hover:bg-[#cfbe94] transition-colors disabled:opacity-50"
+          >
+            {isSavingSettings ? "Сохранение..." : "Сохранить настройки"}
+          </button>
         </div>
       )}
 

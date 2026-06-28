@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { handleFirestoreError, OperationType } from "@/lib/firebaseError";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const navItems = [
   { key: "nav.demonList", path: "/top", icon: Trophy },
@@ -25,6 +26,7 @@ export function Navbar() {
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const { settings } = useSiteSettings();
 
   useEffect(() => {
     if (!user || !user.email) {
@@ -73,6 +75,13 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
+            {settings.logoUrl && (
+              <img 
+                src={settings.logoUrl}
+                alt="TMG Demon List Logo" 
+                className="h-8 w-auto object-contain transform group-hover:scale-105 transition-transform duration-300" 
+              />
+            )}
             <span className="font-heading font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
               TMG <span className="text-[#d8d0b6] font-black italic">LIST</span>
             </span>
