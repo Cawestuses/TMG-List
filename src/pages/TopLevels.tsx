@@ -28,17 +28,29 @@ export default function TopLevels() {
 
   const loading = activeTab === "difficulty" ? levelsLoading : beautyLoading;
 
+  const normalizeString = (value: unknown) => typeof value === 'string' ? value : "";
+  const normalizeNumber = (value: unknown) => typeof value === 'number' ? value : Number(value) || 0;
+  const getSortValue = (item: any, key: string) => {
+    const value = item?.[key];
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') return value.toLowerCase();
+    return "";
+  };
+
   const getFilteredAndSortedData = () => {
+    const normalizedSearch = search.toLowerCase();
+
     if (activeTab === "difficulty") {
       return levels
         .filter(l => 
-          l.name.toLowerCase().includes(search.toLowerCase()) || 
-          l.creator.toLowerCase().includes(search.toLowerCase()) ||
-          l.verifier.toLowerCase().includes(search.toLowerCase())
+          normalizeString(l.name).includes(normalizedSearch) || 
+          normalizeString(l.creator).includes(normalizedSearch) ||
+          normalizeString(l.verifier).includes(normalizedSearch)
         )
+        .slice()
         .sort((a, b) => {
-          const aVal = (a as any)[sortConfig.key];
-          const bVal = (b as any)[sortConfig.key];
+          const aVal = getSortValue(a, sortConfig.key);
+          const bVal = getSortValue(b, sortConfig.key);
           if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
           if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
           return 0;
@@ -46,12 +58,13 @@ export default function TopLevels() {
     } else {
       return beautyLevels
         .filter(l => 
-          l.name.toLowerCase().includes(search.toLowerCase()) || 
-          l.creator.toLowerCase().includes(search.toLowerCase())
+          normalizeString(l.name).includes(normalizedSearch) || 
+          normalizeString(l.creator).includes(normalizedSearch)
         )
+        .slice()
         .sort((a, b) => {
-          const aVal = (a as any)[sortConfig.key];
-          const bVal = (b as any)[sortConfig.key];
+          const aVal = getSortValue(a, sortConfig.key);
+          const bVal = getSortValue(b, sortConfig.key);
           if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
           if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
           return 0;
@@ -178,14 +191,28 @@ export default function TopLevels() {
                     <div 
                       className="block group"
                       onClick={(e) => {
+                        const creator = normalizeString(level.creator);
+                        const verifier = normalizeString((level as Level).verifier);
+                        const levelId = normalizeString(level.id);
+                        const videoUrl = normalizeString(level.video);
+
                         if (e.ctrlKey || e.metaKey) {
-                          navigate(`/player/${encodeURIComponent(level.creator)}`);
-                        } else if (e.altKey && activeTab === "difficulty") {
-                          navigate(`/player/${encodeURIComponent((level as Level).verifier)}`);
-                        } else if (activeTab === "difficulty") {
-                          navigate(`/level/${level.id}`);
-                        } else {
-                          if (level.video) window.open(level.video, '_blank');
+                          if (creator) navigate(`/player/${encodeURIComponent(creator)}`);
+                          return;
+                        }
+
+                        if (e.altKey && activeTab === "difficulty") {
+                          if (verifier) navigate(`/player/${encodeURIComponent(verifier)}`);
+                          return;
+                        }
+
+                        if (activeTab === "difficulty") {
+                          if (levelId) navigate(`/level/${levelId}`);
+                          return;
+                        }
+
+                        if (videoUrl) {
+                          window.open(videoUrl, '_blank');
                         }
                       }}
                     >
