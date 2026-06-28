@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { calculatePointsForRank } from "../hooks/usePlayers";
 import { updateLevelsCache } from "../hooks/useLevels";
 import { updateFutureLevelsCache } from "../hooks/useFutureLevels";
+import { updateBeautyLevelsCache } from "../hooks/useBeautyLevels";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { Upload, Image as ImageIcon, X, Trash2 } from "lucide-react";
 import { handleFirestoreError, OperationType } from "../lib/firebaseError";
@@ -23,7 +24,7 @@ const getApiBaseUrl = () => {
 export default function AdminDashboard() {
   const { user, isAdmin, isElderModer, isModerator, role: userRole, loading, logout } = useAuth();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "submissions" | "users" | "changelog" | "logs" | "settings">("levels");
+  const [activeTab, setActiveTab] = useState<"levels" | "verifiers" | "future" | "beauty" | "submissions" | "users" | "changelog" | "logs" | "settings">("levels");
   
   const [changelogs, setChangelogs] = useState<ChangelogItem[]>([]);
   const [isEditingChangelog, setIsEditingChangelog] = useState<ChangelogItem | null>(null);
@@ -31,6 +32,9 @@ export default function AdminDashboard() {
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   
   const [levels, setLevels] = useState<Level[]>([]);
+  const [beautyLevels, setBeautyLevels] = useState<any[]>([]);
+  const [isEditingBeauty, setIsEditingBeauty] = useState<any | null>(null);
+  const [beautyToDelete, setBeautyToDelete] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<RecordSubmission[]>([]);
   const [isEditingLevel, setIsEditingLevel] = useState<Level | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -84,6 +88,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (hasAccess) {
       loadLevels();
+      loadBeautyLevels();
       loadVerifiers();
       loadFutureLevels();
       loadSubmissions();
@@ -246,6 +251,14 @@ export default function AdminDashboard() {
     updateLevelsCache(sorted);
   };
   
+  const loadBeautyLevels = async () => {
+    const snap = await getDocs(collection(db, "beauty_levels"));
+    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const sorted = data.sort((a, b) => a.rank - b.rank);
+    setBeautyLevels(sorted);
+    updateBeautyLevelsCache(sorted as any);
+  };
+  
   const loadVerifiers = async () => {
     const snap = await getDocs(collection(db, "verifiers"));
     const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Verifier));
@@ -287,6 +300,32 @@ export default function AdminDashboard() {
       await loadLevels();
       const API_BASE_URL = getApiBaseUrl();
       fetch(`${API_BASE_URL}/api/clear-cache`, { method: 'POST' }).catch(() => {});
+    }
+  };
+
+  const handleDeleteBeauty = (id: string) => {
+    setBeautyToDelete(id);
+  };
+
+  const confirmDeleteBeauty = async () => {
+    if (beautyToDelete) {
+      const lvl = beautyLevels.find(l => l.id === beautyToDelete);
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "beauty_levels", beautyToDelete));
+
+      if (lvl) {
+         beautyLevels.forEach(l => {
+            if (l.rank > lvl.rank) {
+               batch.update(doc(db, "beauty_levels", l.id), {
+                  rank: l.rank - 1
+               });
+            }
+         });
+      }
+      
+      await batch.commit();
+      setBeautyToDelete(null);
+      await loadBeautyLevels();
     }
   };
 
@@ -492,9 +531,12 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleImageFile = (file: File, isFuture: boolean = false) => {
+  const handleImageFile = (file: File, targetType: "level" | "future" | "beauty" = "level") => {
     if (!file) return;
-    if (isFuture ? !isEditingFuture : !isEditingLevel) return;
+    if (targetType === "future" && !isEditingFuture) return;
+    if (targetType === "level" && !isEditingLevel) return;
+    if (targetType === "beauty" && !isEditingBeauty) return;
+    
     if (!file.type.startsWith("image/")) {
       alert("Please select a valid image file (PNG, JPG, WEBP, etc.).");
       return;
@@ -526,8 +568,10 @@ export default function AdminDashboard() {
         ctx.drawImage(img, 0, 0, width, height);
 
         const base64 = canvas.toDataURL("image/jpeg", 0.7);
-        if (isFuture) {
+        if (targetType === "future") {
           setIsEditingFuture(prev => prev ? { ...prev, thumbnail: base64 } : null);
+        } else if (targetType === "beauty") {
+          setIsEditingBeauty(prev => prev ? { ...prev, thumbnail: base64 } : null);
         } else {
           setIsEditingLevel(prev => prev ? { ...prev, thumbnail: base64 } : null);
         }
@@ -658,6 +702,62 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error(err);
       alert("Failed to save future level. " + err);
+    }
+  };
+
+  const saveBeautyLevel = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!isEditingBeauty) return;
+    
+    const newRank = Number(isEditingBeauty.rank);
+
+    const beautyToSave = {
+      ...isEditingBeauty,
+      rank: newRank
+    };
+
+    const isNew = !beautyLevels.find(l => l.id === beautyToSave.id);
+    const oldLevel = beautyLevels.find(l => l.id === beautyToSave.id);
+    const oldRank = oldLevel ? oldLevel.rank : null;
+
+    try {
+      const batch = writeBatch(db);
+
+      if (isNew) {
+         beautyLevels.forEach(l => {
+            if (l.rank >= newRank) {
+               batch.update(doc(db, "beauty_levels", l.id), {
+                 rank: l.rank + 1
+               });
+            }
+         });
+      } else if (oldRank !== null && oldRank !== newRank) {
+         beautyLevels.forEach(l => {
+            if (l.id === beautyToSave.id) return;
+            if (oldRank < newRank) {
+               if (l.rank > oldRank && l.rank <= newRank) {
+                  batch.update(doc(db, "beauty_levels", l.id), {
+                    rank: l.rank - 1
+                  });
+               }
+            } else {
+               if (l.rank >= newRank && l.rank < oldRank) {
+                  batch.update(doc(db, "beauty_levels", l.id), {
+                    rank: l.rank + 1
+                  });
+               }
+            }
+         });
+      }
+
+      batch.set(doc(db, "beauty_levels", beautyToSave.id || `beauty-${Date.now()}`), beautyToSave);
+      await batch.commit();
+
+      setIsEditingBeauty(null);
+      await loadBeautyLevels();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save beauty level. " + err);
     }
   };
 
@@ -795,6 +895,12 @@ export default function AdminDashboard() {
           className={`px-4 py-2 font-bold transition-colors ${activeTab === "future" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
         >
           {t("admin.tabs.future")}
+        </button>
+        <button 
+          onClick={() => setActiveTab("beauty")}
+          className={`px-4 py-2 font-bold transition-colors ${activeTab === "beauty" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
+        >
+          Топ по красоте
         </button>
         <button 
           onClick={() => setActiveTab("verifiers")}
@@ -955,6 +1061,52 @@ export default function AdminDashboard() {
                 {futureLevels.length === 0 && (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-white/40">No future levels found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {activeTab === "beauty" && (
+        <>
+          <div className="flex gap-4 mb-6">
+            <button 
+              onClick={() => setIsEditingBeauty({
+                id: `beauty-${Date.now()}`, name: "", creator: "", video: "", thumbnail: "", rank: beautyLevels.length + 1
+              })} 
+              className="px-4 py-2 bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/30 rounded-lg text-sm font-bold uppercase"
+            >
+              + Add Beauty Level
+            </button>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-white/10 bg-black/40">
+                  <th className="p-4 w-20 text-center">Rank</th>
+                  <th className="p-4">Name</th>
+                  <th className="p-4">Creator</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {beautyLevels.map(lvl => (
+                  <tr key={lvl.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="p-4 text-center font-mono text-[#d8d0b6] font-bold text-lg">{lvl.rank}</td>
+                    <td className="p-4 font-bold">{lvl.name}</td>
+                    <td className="p-4 text-white/60">{lvl.creator}</td>
+                    <td className="p-4 text-right">
+                      <button onClick={() => setIsEditingBeauty({...lvl})} className="text-[#cfbe94] hover:underline mr-4">Edit</button>
+                      <button onClick={() => handleDeleteBeauty(lvl.id)} className="text-red-400 hover:underline">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+                {beautyLevels.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-white/40">No beauty levels found.</td>
                   </tr>
                 )}
               </tbody>
@@ -1486,7 +1638,7 @@ export default function AdminDashboard() {
                      e.preventDefault();
                      setDragActive(false);
                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                       handleImageFile(e.dataTransfer.files[0], true);
+                       handleImageFile(e.dataTransfer.files[0], "future");
                      }
                    }}
                    className={`border-2 border-dashed rounded-xl p-6 transition-all duration-300 text-center flex flex-col items-center justify-center cursor-pointer ${
@@ -1503,7 +1655,7 @@ export default function AdminDashboard() {
                      accept="image/*" 
                      onChange={(e) => {
                        if (e.target.files && e.target.files[0]) {
-                         handleImageFile(e.target.files[0], true);
+                         handleImageFile(e.target.files[0], "future");
                        }
                      }} 
                    />
@@ -1573,6 +1725,132 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {isEditingBeauty && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <form onSubmit={saveBeautyLevel} className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">{beautyLevels.find(f => f.id === isEditingBeauty.id) ? "Edit Beauty Level" : "New Beauty Level"}</h2>
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <div>
+                 <label className="block text-xs uppercase text-white/50 mb-1">Rank</label>
+                 <input type="number" className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingBeauty.rank} onChange={(e) => setIsEditingBeauty({...isEditingBeauty, rank: e.target.value})} required />
+              </div>
+              <div>
+                 <label className="block text-xs uppercase text-white/50 mb-1">Name</label>
+                 <input className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingBeauty.name} onChange={(e) => setIsEditingBeauty({...isEditingBeauty, name: e.target.value})} required />
+              </div>
+              <div>
+                 <label className="block text-xs uppercase text-white/50 mb-1">Creator</label>
+                 <input className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingBeauty.creator} onChange={(e) => setIsEditingBeauty({...isEditingBeauty, creator: e.target.value})} required />
+              </div>
+              <div>
+                 <label className="block text-xs uppercase text-white/50 mb-1">Video Link</label>
+                 <input className="w-full bg-black border border-white/10 rounded p-2 text-white" value={isEditingBeauty.video} onChange={(e) => setIsEditingBeauty({...isEditingBeauty, video: e.target.value})} />
+              </div>
+              
+              <div className="space-y-3">
+                 <label className="block text-xs uppercase text-white/50">Level Preview (Thumbnail)</label>
+                 
+                 {/* Drag and Drop Zone */}
+                 <div 
+                   onDragOver={(e) => {
+                     e.preventDefault();
+                     setDragActive(true);
+                   }}
+                   onDragLeave={(e) => {
+                     e.preventDefault();
+                     setDragActive(false);
+                   }}
+                   onDrop={(e) => {
+                     e.preventDefault();
+                     setDragActive(false);
+                     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                       handleImageFile(e.dataTransfer.files[0], "beauty");
+                     }
+                   }}
+                   className={`border-2 border-dashed rounded-xl p-6 transition-all duration-300 text-center flex flex-col items-center justify-center cursor-pointer ${
+                     dragActive 
+                       ? "border-[#d8d0b6] bg-[#d8d0b6]/10 scale-[1.02]" 
+                       : "border-white/10 hover:border-white/25 hover:bg-white/5 bg-black/40"
+                   }`}
+                   onClick={() => document.getElementById("beauty-thumbnail-file-input")?.click()}
+                 >
+                   <input 
+                     type="file" 
+                     id="beauty-thumbnail-file-input" 
+                     className="hidden" 
+                     accept="image/*" 
+                     onChange={(e) => {
+                       if (e.target.files && e.target.files[0]) {
+                         handleImageFile(e.target.files[0], "beauty");
+                       }
+                     }} 
+                   />
+                   
+                   {isProcessingImage ? (
+                     <div className="flex flex-col items-center gap-2">
+                       <div className="w-6 h-6 border-2 border-[#d8d0b6] border-t-transparent rounded-full animate-spin" />
+                       <span className="text-xs text-[#d8d0b6] font-semibold uppercase tracking-wide">Compressing...</span>
+                     </div>
+                   ) : isEditingBeauty.thumbnail ? (
+                     <div className="space-y-3 w-full">
+                       <div className="relative w-full max-w-[240px] h-[135px] mx-auto rounded-lg overflow-hidden border border-white/20">
+                         <img 
+                           src={isEditingBeauty.thumbnail} 
+                           alt="Thumbnail preview" 
+                           className="w-full h-full object-cover" 
+                           referrerPolicy="no-referrer"
+                         />
+                         <button 
+                           type="button"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setIsEditingBeauty({ ...isEditingBeauty, thumbnail: "" });
+                           }}
+                           className="absolute top-1.5 right-1.5 p-1 bg-black/80 hover:bg-red-600 text-white rounded-full transition-colors"
+                           title="Remove preview"
+                         >
+                           <X className="w-3.5 h-3.5" />
+                         </button>
+                       </div>
+                       <p className="text-[10px] text-white/50 tracking-wide font-mono">Image attached. Drag another file or click to replace.</p>
+                     </div>
+                   ) : (
+                     <div className="flex flex-col items-center gap-2">
+                       <div className="p-3 bg-[#d8d0b6]/10 text-[#d8d0b6] rounded-full border border-[#d8d0b6]/20 transition-transform">
+                         <Upload className="w-5 h-5" />
+                       </div>
+                       <div>
+                         <p className="text-xs font-semibold text-white/80">Drag & drop preview image here</p>
+                         <p className="text-[10px] text-white/40 mt-1">or click to browse from files</p>
+                       </div>
+                     </div>
+                   )}
+                 </div>
+
+                 {/* Keep alternative URL paste as secondary choice */}
+                 <div className="flex items-center gap-2 py-1">
+                   <div className="h-px bg-white/10 flex-1" />
+                   <span className="text-[10px] uppercase text-white/30 font-semibold tracking-wider">or paste direct image URL</span>
+                   <div className="h-px bg-white/10 flex-1" />
+                 </div>
+
+                 <input 
+                   type="text"
+                   className="w-full bg-black border border-white/10 rounded-lg p-2.5 text-xs text-white" 
+                   value={isEditingBeauty.thumbnail || ""} 
+                   onChange={(e) => setIsEditingBeauty({...isEditingBeauty, thumbnail: e.target.value})} 
+                   placeholder="Enter direct URL (e.g. YouTube thumbnail link)" 
+                 />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setIsEditingBeauty(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-[#bfae7d] hover:bg-[#d8d0b6] rounded font-bold text-white">Save</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {isEditingChangelog && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <form onSubmit={saveChangelog} className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-md">
@@ -1629,6 +1907,19 @@ export default function AdminDashboard() {
             <div className="flex justify-center gap-4">
               <button onClick={() => setFutureToDelete(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
               <button onClick={confirmDeleteFuture} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-white">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {beautyToDelete && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-sm text-center">
+            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
+            <p className="mb-6">Are you sure you want to delete this beauty level?</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={() => setBeautyToDelete(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
+              <button onClick={confirmDeleteBeauty} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-white">Delete</button>
             </div>
           </div>
         </div>

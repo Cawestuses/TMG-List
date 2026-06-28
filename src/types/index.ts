@@ -22,6 +22,16 @@ export interface FutureLevel {
   thumbnail?: string;
 }
 
+export interface BeautyLevel {
+  id: string;
+  rank: number;
+  name: string;
+  creator: string;
+  video: string;
+  thumbnail?: string;
+  geometryDashId: string;
+}
+
 export interface Verifier {
   id: string;
   name: string;
