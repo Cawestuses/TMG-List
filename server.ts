@@ -11,6 +11,8 @@ import cors from "cors";
 const app = express();
 app.set('trust proxy', 1 /* number of proxies between user and server */);
 
+app.use('/assets', express.static(path.join(__dirname, '../dist/assets')));
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow any origin to prevent CORS NetworkErrors on preview, production, and dev domains
