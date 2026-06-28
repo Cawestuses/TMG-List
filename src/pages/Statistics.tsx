@@ -4,7 +4,7 @@ import type { Level, Player } from "../types";
 import { Activity, Globe, Swords, Target } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const COLORS = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#ef4444'];
+const COLORS = ['#d8d0b6', '#cfbe94', '#d3c79d', '#10b981', '#cfbe94', '#3b82f6', '#ef4444'];
 
 import { useLevels } from "../hooks/useLevels";
 import { usePlayers } from "../hooks/usePlayers";
@@ -19,7 +19,7 @@ export default function Statistics() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 text-center space-y-4">
-         <div className="w-16 h-16 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+         <div className="w-16 h-16 border-4 border-[#d8d0b6]/20 border-t-[#d8d0b6] rounded-full animate-spin" />
          <p className="text-white/40 font-mono text-sm uppercase tracking-widest animate-pulse">Aggregating Data...</p>
       </div>
     );
@@ -63,8 +63,8 @@ export default function Statistics() {
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: t("statistics.totalCompletions"), value: players.reduce((sum, p) => sum + p.completedLevels, 0).toLocaleString(), icon: Activity, color: "text-purple-400" },
-          { label: t("statistics.activeCountries"), value: uniqueCountries, icon: Globe, color: "text-cyan-400" },
+          { label: t("statistics.totalCompletions"), value: players.reduce((sum, p) => sum + p.completedLevels, 0).toLocaleString(), icon: Activity, color: "text-[#d8d0b6]" },
+          { label: t("statistics.activeCountries"), value: uniqueCountries, icon: Globe, color: "text-[#cfbe94]" },
           { label: t("statistics.levelsRanked"), value: levels.length, icon: Swords, color: "text-pink-400" },
           { label: t("statistics.totalPlayers"), value: players.length, icon: Target, color: "text-emerald-400" },
         ].map((stat, i) => (
@@ -97,7 +97,7 @@ export default function Statistics() {
                         <XAxis dataKey="name" stroke="#ffffff40" fontSize={12} tickLine={false} axisLine={false} />
                         <YAxis stroke="#ffffff40" fontSize={12} tickLine={false} axisLine={false} />
                         <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff05' }} />
-                        <Bar dataKey="count" fill="#a855f7" radius={[4, 4, 0, 0]}>
+                        <Bar dataKey="count" fill="#d3c79d" radius={[4, 4, 0, 0]}>
                             {pointsData.map((_, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}

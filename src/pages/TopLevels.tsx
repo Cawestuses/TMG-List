@@ -39,7 +39,7 @@ export default function TopLevels() {
 
   const SortIcon = ({ columnKey }: { columnKey: keyof Level }) => {
     if (sortConfig.key !== columnKey) return <span className="opacity-0 group-hover:opacity-50 transition-opacity ml-1">↕</span>;
-    return <span className="ml-1 text-purple-400">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
+    return <span className="ml-1 text-[#d8d0b6]">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
   };
 
   return (
@@ -58,7 +58,7 @@ export default function TopLevels() {
               placeholder={t("levels.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-purple-500/50 transition-all backdrop-blur-sm text-slate-100 placeholder-white/30"
+              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#d8d0b6]/50 transition-all backdrop-blur-sm text-slate-100 placeholder-white/30"
             />
           </div>
 
@@ -129,7 +129,7 @@ export default function TopLevels() {
                         
                         {/* Rank */}
                         <div className={`text-xl font-mono font-bold w-12 ${
-                          level.rank === 1 ? "text-purple-400" :
+                          level.rank === 1 ? "text-[#d8d0b6]" :
                           level.rank <= 5 ? "text-white/60" :
                           "text-white/20"
                         }`}>
@@ -146,7 +146,7 @@ export default function TopLevels() {
                               referrerPolicy="no-referrer"
                             />
                           ) : (
-                            <div className="w-16 h-10 rounded-md bg-purple-500/10 border border-purple-500/20 shrink-0 flex items-center justify-center text-xs text-purple-400 font-mono">
+                            <div className="w-16 h-10 rounded-md bg-[#d8d0b6]/10 border border-[#d8d0b6]/20 shrink-0 flex items-center justify-center text-xs text-[#d8d0b6] font-mono">
                               GD
                             </div>
                           )}
@@ -159,7 +159,7 @@ export default function TopLevels() {
                         {/* Crew */}
                         <div>
                           <div 
-                            className="font-semibold text-white/90 text-sm hover:text-cyan-400 transition-colors"
+                            className="font-semibold text-white/90 text-sm hover:text-[#cfbe94] transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/player/${encodeURIComponent(level.creator)}`);
@@ -168,7 +168,7 @@ export default function TopLevels() {
                             {level.creator}
                           </div>
                           <div 
-                            className="text-[10px] text-white/40 uppercase font-semibold mt-1 hover:text-cyan-300 transition-colors"
+                            className="text-[10px] text-white/40 uppercase font-semibold mt-1 hover:text-[#cfbe94] transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/player/${encodeURIComponent(level.verifier)}`);
@@ -179,7 +179,7 @@ export default function TopLevels() {
                         </div>
 
                         {/* Points */}
-                        <div className="text-right font-medium text-cyan-400 text-sm">
+                        <div className="text-right font-medium text-[#cfbe94] text-sm">
                           {level.points.toFixed(1)}
                         </div>
 
@@ -202,7 +202,7 @@ export default function TopLevels() {
                         </div>
 
                         {/* Action */}
-                        <div className="flex justify-end text-white/20 group-hover:text-purple-400 transition-colors">
+                        <div className="flex justify-end text-white/20 group-hover:text-[#d8d0b6] transition-colors">
                           <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </div>
                       </div>

@@ -6,9 +6,9 @@
   --color-gd-card: #121214;
   --color-gd-border: #27272a;
   
-  --color-gd-primary: #a855f7;
-  --color-gd-secondary: #06b6d4;
-  --color-gd-accent: #a855f7;
+  --color-gd-primary: #cfbe94;
+  --color-gd-secondary: #d8d0b6;
+  --color-gd-accent: #dfd8d0;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
@@ -20,9 +20,9 @@
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     /* Accent variables derived from the hex codes above */
-    --primary: 326 78% 60%; /* #ec4899 ~ hsla(330, 81%, 60%) */
-    --secondary: 189 94% 43%; /* #06b6d4 */
-    --accent: 271 91% 65%; /* #a855f7 */
+    --primary: 40 30% 72%; /* #cfbe94 */
+    --secondary: 40 20% 80%; /* #d8d0b6 */
+    --accent: 35 20% 85%; /* #cfbe94 */
   }
 }
 
@@ -35,7 +35,7 @@ body {
 }
 
 ::selection {
-  background-color: rgba(168, 85, 247, 0.3);
+  background-color: rgba(207, 190, 148, 0.25);
 }
 
 /* Custom Scrollbar */
@@ -54,7 +54,7 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(to right, #06b6d4, #a855f7, #ec4899);
+  background: linear-gradient(to right, #cfbe94, #d3c79d, #d8d0b6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

@@ -69,5 +69,9 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true;
     }
+    match /changelog/{logId} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }

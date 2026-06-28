@@ -1,6 +1,8 @@
 {
-  "name": "",
-  "description": "",
+  "name": "TMG-List",
+  "description": "Geometry Dash Demon List clone.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

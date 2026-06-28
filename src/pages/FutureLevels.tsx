@@ -37,7 +37,7 @@ export default function FutureLevels() {
 
   const SortIcon = ({ columnKey }: { columnKey: keyof FutureLevel }) => {
     if (sortConfig.key !== columnKey) return <span className="opacity-0 group-hover:opacity-50 transition-opacity ml-1">↕</span>;
-    return <span className="ml-1 text-purple-400">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
+    return <span className="ml-1 text-[#d8d0b6]">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
   };
 
   return (
@@ -56,7 +56,7 @@ export default function FutureLevels() {
               placeholder={t("levels.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-purple-500/50 transition-all backdrop-blur-sm text-slate-100 placeholder-white/30"
+              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#d8d0b6]/50 transition-all backdrop-blur-sm text-slate-100 placeholder-white/30"
             />
           </div>
         </div>
@@ -119,7 +119,7 @@ export default function FutureLevels() {
                               referrerPolicy="no-referrer"
                             />
                           ) : (
-                            <div className="w-16 h-10 rounded-md bg-purple-500/10 border border-purple-500/20 shrink-0 flex items-center justify-center text-xs text-purple-400 font-mono">
+                            <div className="w-16 h-10 rounded-md bg-[#d8d0b6]/10 border border-[#d8d0b6]/20 shrink-0 flex items-center justify-center text-xs text-[#d8d0b6] font-mono">
                               FTR
                             </div>
                           )}
@@ -130,7 +130,7 @@ export default function FutureLevels() {
 
                         {/* Crew */}
                         <div 
-                          className="text-center font-semibold text-white/60 text-sm hover:text-cyan-400 transition-colors"
+                          className="text-center font-semibold text-white/60 text-sm hover:text-[#cfbe94] transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/player/${encodeURIComponent(level.creator)}`);
@@ -140,12 +140,12 @@ export default function FutureLevels() {
                         </div>
 
                         {/* Status */}
-                        <div className="flex justify-center text-sm text-cyan-400 font-medium">
+                        <div className="flex justify-center text-sm text-[#cfbe94] font-medium">
                           {level.status}
                         </div>
 
                         {/* Action */}
-                        <div className="flex justify-end text-white/20 group-hover:text-purple-400 transition-colors">
+                        <div className="flex justify-end text-white/20 group-hover:text-[#d8d0b6] transition-colors">
                           <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </div>
                       </div>

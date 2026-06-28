@@ -35,11 +35,16 @@ export function useLevels() {
       const isLocalOrCloudRun = typeof window !== "undefined" && (window.location.hostname.includes("run.app") || window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1"));
       const API_BASE_URL = (envUrl.includes("onrender.com") || isLocalOrCloudRun) ? "" : envUrl;
       fetch(`${API_BASE_URL}/api/levels`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to fetch levels");
+          return res.json();
+        })
         .then((data: Level[]) => {
-          data.sort((a, b) => a.rank - b.rank);
-          cachedLevels = data;
-          subscribers.forEach(sub => sub(data));
+          if (Array.isArray(data)) {
+            data.sort((a, b) => a.rank - b.rank);
+            cachedLevels = data;
+            subscribers.forEach(sub => sub(data));
+          }
           isFetching = false;
         }).catch(err => {
           console.error(err);

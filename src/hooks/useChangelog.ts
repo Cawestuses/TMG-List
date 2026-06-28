@@ -29,10 +29,15 @@ export function useChangelog() {
       const isLocalOrCloudRun = typeof window !== "undefined" && (window.location.hostname.includes("run.app") || window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1"));
       const API_BASE_URL = (envUrl.includes("onrender.com") || isLocalOrCloudRun) ? "" : envUrl;
       fetch(`${API_BASE_URL}/api/changelog`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to fetch changelog");
+          return res.json();
+        })
         .then((data: ChangelogItem[]) => {
-          cachedLog = data;
-          subscribers.forEach(sub => sub(data));
+          if (Array.isArray(data)) {
+            cachedLog = data;
+            subscribers.forEach(sub => sub(data));
+          }
           isFetching = false;
         }).catch(err => {
           console.error(err);

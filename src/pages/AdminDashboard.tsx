@@ -734,25 +734,25 @@ export default function AdminDashboard() {
       <div className="flex gap-4 mb-8 border-b border-white/10 pb-4">
         <button 
           onClick={() => setActiveTab("levels")}
-          className={`px-4 py-2 font-bold transition-colors ${activeTab === "levels" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+          className={`px-4 py-2 font-bold transition-colors ${activeTab === "levels" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
         >
           {t("admin.tabs.levels")}
         </button>
         <button 
           onClick={() => setActiveTab("future")}
-          className={`px-4 py-2 font-bold transition-colors ${activeTab === "future" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+          className={`px-4 py-2 font-bold transition-colors ${activeTab === "future" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
         >
           {t("admin.tabs.future")}
         </button>
         <button 
           onClick={() => setActiveTab("verifiers")}
-          className={`px-4 py-2 font-bold transition-colors ${activeTab === "verifiers" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+          className={`px-4 py-2 font-bold transition-colors ${activeTab === "verifiers" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
         >
           {t("admin.tabs.verifiers")}
         </button>
         <button 
           onClick={() => setActiveTab("submissions")}
-          className={`px-4 py-2 font-bold transition-colors ${activeTab === "submissions" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+          className={`px-4 py-2 font-bold transition-colors ${activeTab === "submissions" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
         >
           {t("admin.tabs.submissions")}
         </button>
@@ -760,13 +760,13 @@ export default function AdminDashboard() {
           <>
             <button 
               onClick={() => setActiveTab("users")}
-              className={`px-4 py-2 font-bold transition-colors ${activeTab === "users" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+              className={`px-4 py-2 font-bold transition-colors ${activeTab === "users" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
             >
               {t("admin.tabs.users")}
             </button>
             <button 
               onClick={() => setActiveTab("logs")}
-              className={`px-4 py-2 font-bold transition-colors ${activeTab === "logs" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+              className={`px-4 py-2 font-bold transition-colors ${activeTab === "logs" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
             >
               {t("admin.tabs.logs")}
             </button>
@@ -774,7 +774,7 @@ export default function AdminDashboard() {
         )}
         <button 
           onClick={() => setActiveTab("changelog")}
-          className={`px-4 py-2 font-bold transition-colors ${activeTab === "changelog" ? "text-purple-400 border-b-2 border-purple-400" : "text-white/60 hover:text-white"}`}
+          className={`px-4 py-2 font-bold transition-colors ${activeTab === "changelog" ? "text-[#d8d0b6] border-b-2 border-[#d8d0b6]" : "text-white/60 hover:text-white"}`}
         >
           {t("admin.tabs.changelog")}
         </button>
@@ -793,20 +793,20 @@ export default function AdminDashboard() {
             </button>
             <button 
               onClick={() => setIsImporting(true)}
-              className="px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg text-sm font-bold uppercase"
+              className="px-4 py-2 bg-[#d8d0b6]/20 text-[#d8d0b6] border border-[#d8d0b6]/30 rounded-lg text-sm font-bold uppercase"
             >
               {t("admin.levels.importJSON")}
             </button>
             <button 
               onClick={() => setIsSheetsModalOpen(true)}
-              className="px-4 py-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-sm font-bold uppercase"
+              className="px-4 py-2 bg-[#cfbe94]/20 text-[#cfbe94] border border-amber-300/30 rounded-lg text-sm font-bold uppercase"
             >
               {t("admin.levels.syncSheets")}
             </button>
             <button 
               onClick={fixRanksAndPoints}
               disabled={isFixingRanks}
-              className="px-4 py-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-bold uppercase disabled:opacity-50"
+              className="px-4 py-2 bg-[#d8d0b6]/20 text-[#d8d0b6] border border-[#d8d0b6]/30 rounded-lg text-sm font-bold uppercase disabled:opacity-50"
             >
               {isFixingRanks ? t("admin.levels.fixing") : t("admin.levels.fixRanks")}
             </button>
@@ -835,7 +835,7 @@ export default function AdminDashboard() {
                        {level.isActive ? <span className="text-emerald-400 text-xs">{t("admin.levels.activeStatus")}</span> : <span className="text-zinc-500 text-xs">{t("admin.levels.inactiveStatus")}</span>}
                     </td>
                     <td className="p-4 text-right">
-                      <button onClick={() => setIsEditingLevel({...level})} className="text-blue-400 hover:underline mr-4">{t("admin.levels.edit")}</button>
+                      <button onClick={() => setIsEditingLevel({...level})} className="text-[#cfbe94] hover:underline mr-4">{t("admin.levels.edit")}</button>
                       <button onClick={() => handleDeleteLevel(level.id)} className="text-red-400 hover:underline">{t("admin.levels.delete")}</button>
                     </td>
                   </tr>
@@ -864,7 +864,7 @@ export default function AdminDashboard() {
             </button>
             <button 
               onClick={() => setIsImportingFuture(true)}
-              className="px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg text-sm font-bold uppercase"
+              className="px-4 py-2 bg-[#d8d0b6]/20 text-[#d8d0b6] border border-[#d8d0b6]/30 rounded-lg text-sm font-bold uppercase"
             >
               {t("admin.future.importJSON")}
             </button>
@@ -885,9 +885,9 @@ export default function AdminDashboard() {
                   <tr key={future.id} className="border-b border-white/5 hover:bg-white/5">
                     <td className="p-4 font-bold">{future.name}</td>
                     <td className="p-4 text-white/60">{future.creator}</td>
-                    <td className="p-4 text-cyan-400 font-medium">{future.status}</td>
+                    <td className="p-4 text-[#cfbe94] font-medium">{future.status}</td>
                     <td className="p-4 text-right">
-                      <button onClick={() => setIsEditingFuture({...future})} className="text-blue-400 hover:underline mr-4">Edit</button>
+                      <button onClick={() => setIsEditingFuture({...future})} className="text-[#cfbe94] hover:underline mr-4">Edit</button>
                       <button onClick={() => handleDeleteFuture(future.id)} className="text-red-400 hover:underline">Delete</button>
                     </td>
                   </tr>
@@ -931,7 +931,7 @@ export default function AdminDashboard() {
                     <td className="p-4 font-mono text-white/60 text-xs">{verifier.id}</td>
                     <td className="p-4 font-bold">{verifier.name}</td>
                     <td className="p-4 text-right">
-                      <button onClick={() => setIsEditingVerifier({...verifier})} className="text-blue-400 hover:underline mr-4">Edit</button>
+                      <button onClick={() => setIsEditingVerifier({...verifier})} className="text-[#cfbe94] hover:underline mr-4">Edit</button>
                       <button onClick={() => handleDeleteVerifier(verifier.id)} className="text-red-400 hover:underline">Delete</button>
                     </td>
                   </tr>
@@ -966,12 +966,12 @@ export default function AdminDashboard() {
                 {submissions.map(submission => (
                   <tr key={submission.id} className="border-b border-white/5 hover:bg-white/5">
                     <td className="p-4 text-white/60">{new Date(submission.createdAt).toLocaleDateString()}</td>
-                    <td className="p-4 font-bold hover:text-cyan-400">
+                    <td className="p-4 font-bold hover:text-[#cfbe94]">
                       <Link to={`/player/${encodeURIComponent(submission.username)}`} target="_blank">
                         {submission.username}
                       </Link>
                     </td>
-                    <td className="p-4 hover:text-cyan-400 font-medium">
+                    <td className="p-4 hover:text-[#cfbe94] font-medium">
                       {(() => {
                         const lvl = levels.find(l => l.name.toLowerCase() === submission.levelName.toLowerCase());
                         return lvl ? (
@@ -981,14 +981,14 @@ export default function AdminDashboard() {
                         );
                       })()}
                     </td>
-                    <td className="p-4 text-cyan-400 font-medium">{submission.progress}%</td>
+                    <td className="p-4 text-[#cfbe94] font-medium">{submission.progress}%</td>
                     <td className="p-4 text-white/60 capitalize">{submission.status}</td>
-                    <td className="p-4"><a href={submission.videoProof} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Link</a></td>
+                    <td className="p-4"><a href={submission.videoProof} target="_blank" rel="noopener noreferrer" className="text-[#cfbe94] hover:underline">Link</a></td>
                     <td className="p-4 text-right">
                       {submission.status === "pending" && (
                         <>
                           <button onClick={() => handleAcceptSubmission(submission.id)} className="text-emerald-400 hover:underline mr-4">Accept</button>
-                          <button onClick={() => handleRejectSubmission(submission.id)} className="text-[#a855f7] hover:underline mr-4">Reject</button>
+                          <button onClick={() => handleRejectSubmission(submission.id)} className="text-[#cfbe94] hover:underline mr-4">Reject</button>
                         </>
                       )}
                       <button onClick={() => handleDeleteSubmission(submission.id)} className="text-red-400 hover:underline">Delete</button>
@@ -1018,7 +1018,7 @@ export default function AdminDashboard() {
               placeholder="Search by username..." 
               value={usersSearch} 
               onChange={(e) => setUsersSearch(e.target.value)} 
-              className="bg-black border border-white/10 rounded-lg px-4 py-2 text-sm text-white w-full sm:w-64 focus:outline-none focus:border-purple-500/50"
+              className="bg-black border border-white/10 rounded-lg px-4 py-2 text-sm text-white w-full sm:w-64 focus:outline-none focus:border-[#d8d0b6]/50"
             />
           </div>
           {loadingProfiles ? (
@@ -1040,7 +1040,7 @@ export default function AdminDashboard() {
                     .filter(p => !usersSearch || p.id.toLowerCase().includes(usersSearch.toLowerCase()) || (p.username || "").toLowerCase().includes(usersSearch.toLowerCase()))
                     .map(profile => (
                       <tr key={profile.id} className="hover:bg-white/5 transition-colors">
-                        <td className="p-4 font-bold font-mono text-purple-400">{profile.id}</td>
+                        <td className="p-4 font-bold font-mono text-[#d8d0b6]">{profile.id}</td>
                         <td className="p-4">
                           <div className="font-semibold text-white">{profile.username || profile.id}</div>
                           <div className="text-xs text-white/40">{profile.description || "No description"}</div>
@@ -1069,7 +1069,7 @@ export default function AdminDashboard() {
                               (userRole === 'elder_moder' && ['admin', 'elder_moder'].includes(profile.role || 'user')) ||
                               (profile.id.toLowerCase() === user?.email?.split('@')[0].toLowerCase())
                             }
-                            className="bg-black border border-white/10 rounded-lg p-2 text-xs text-white cursor-pointer focus:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-black border border-white/10 rounded-lg p-2 text-xs text-white cursor-pointer focus:border-[#d8d0b6] disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <option value="user">User</option>
                             <option value="moderator">Moderator</option>
@@ -1104,7 +1104,7 @@ export default function AdminDashboard() {
             <div className="flex gap-2">
               <button 
                 onClick={loadLogs} 
-                className="px-4 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 border border-purple-500/35 text-xs font-bold rounded-lg uppercase tracking-wide transition-colors"
+                className="px-4 py-2 bg-[#d8d0b6]/20 text-[#d8d0b6] hover:bg-[#d8d0b6]/30 border border-[#d8d0b6]/35 text-xs font-bold rounded-lg uppercase tracking-wide transition-colors"
               >
                 Refresh Logs
               </button>
@@ -1127,7 +1127,7 @@ export default function AdminDashboard() {
                       {new Date(log.timestamp).toLocaleString()}
                     </td>
                     <td className="p-4 text-xs font-semibold">
-                      <div className="text-purple-400 font-mono">@{log.moderatorUsername}</div>
+                      <div className="text-[#d8d0b6] font-mono">@{log.moderatorUsername}</div>
                       <div className="text-[10px] text-white/40 mt-0.5">{log.moderatorEmail}</div>
                     </td>
                     <td className="p-4">
@@ -1184,7 +1184,7 @@ export default function AdminDashboard() {
                     <td className="p-4 text-white/60">{new Date(log.date).toLocaleDateString()}</td>
                     <td className="p-4 font-bold max-w-sm truncate">{log.content}</td>
                     <td className="p-4 text-right">
-                      <button onClick={() => setIsEditingChangelog({...log})} className="text-blue-400 hover:underline mr-4">Edit</button>
+                      <button onClick={() => setIsEditingChangelog({...log})} className="text-[#cfbe94] hover:underline mr-4">Edit</button>
                       <button onClick={() => handleDeleteChangelog(log.id)} className="text-red-400 hover:underline">Delete</button>
                     </td>
                   </tr>
@@ -1274,7 +1274,7 @@ export default function AdminDashboard() {
                    }}
                    className={`border-2 border-dashed rounded-xl p-6 transition-all duration-300 text-center flex flex-col items-center justify-center cursor-pointer ${
                      dragActive 
-                       ? "border-purple-500 bg-purple-500/10 scale-[1.02]" 
+                       ? "border-[#d8d0b6] bg-[#d8d0b6]/10 scale-[1.02]" 
                        : "border-white/10 hover:border-white/25 hover:bg-white/5 bg-black/40"
                    }`}
                    onClick={() => document.getElementById("thumbnail-file-input")?.click()}
@@ -1293,8 +1293,8 @@ export default function AdminDashboard() {
                    
                    {isProcessingImage ? (
                      <div className="flex flex-col items-center gap-2">
-                       <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                       <span className="text-xs text-purple-400 font-semibold uppercase tracking-wide">Compressing...</span>
+                       <div className="w-6 h-6 border-2 border-[#d8d0b6] border-t-transparent rounded-full animate-spin" />
+                       <span className="text-xs text-[#d8d0b6] font-semibold uppercase tracking-wide">Compressing...</span>
                      </div>
                    ) : isEditingLevel.thumbnail ? (
                      <div className="space-y-3 w-full">
@@ -1321,7 +1321,7 @@ export default function AdminDashboard() {
                      </div>
                    ) : (
                      <div className="flex flex-col items-center gap-2">
-                       <div className="p-3 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20 transition-transform">
+                       <div className="p-3 bg-[#d8d0b6]/10 text-[#d8d0b6] rounded-full border border-[#d8d0b6]/20 transition-transform">
                          <Upload className="w-5 h-5" />
                        </div>
                        <div>
@@ -1354,7 +1354,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setIsEditingLevel(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded font-bold text-white">Save</button>
+              <button type="submit" className="px-4 py-2 bg-[#bfae7d] hover:bg-[#d8d0b6] rounded font-bold text-white">Save</button>
             </div>
           </form>
         </div>
@@ -1376,7 +1376,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setIsEditingVerifier(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded font-bold text-white">Save</button>
+              <button type="submit" className="px-4 py-2 bg-[#bfae7d] hover:bg-[#d8d0b6] rounded font-bold text-white">Save</button>
             </div>
           </form>
         </div>
@@ -1431,7 +1431,7 @@ export default function AdminDashboard() {
                    }}
                    className={`border-2 border-dashed rounded-xl p-6 transition-all duration-300 text-center flex flex-col items-center justify-center cursor-pointer ${
                      dragActive 
-                       ? "border-purple-500 bg-purple-500/10 scale-[1.02]" 
+                       ? "border-[#d8d0b6] bg-[#d8d0b6]/10 scale-[1.02]" 
                        : "border-white/10 hover:border-white/25 hover:bg-white/5 bg-black/40"
                    }`}
                    onClick={() => document.getElementById("future-thumbnail-file-input")?.click()}
@@ -1450,8 +1450,8 @@ export default function AdminDashboard() {
                    
                    {isProcessingImage ? (
                      <div className="flex flex-col items-center gap-2">
-                       <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                       <span className="text-xs text-purple-400 font-semibold uppercase tracking-wide">Compressing...</span>
+                       <div className="w-6 h-6 border-2 border-[#d8d0b6] border-t-transparent rounded-full animate-spin" />
+                       <span className="text-xs text-[#d8d0b6] font-semibold uppercase tracking-wide">Compressing...</span>
                      </div>
                    ) : isEditingFuture.thumbnail ? (
                      <div className="space-y-3 w-full">
@@ -1478,7 +1478,7 @@ export default function AdminDashboard() {
                      </div>
                    ) : (
                      <div className="flex flex-col items-center gap-2">
-                       <div className="p-3 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20 transition-transform">
+                       <div className="p-3 bg-[#d8d0b6]/10 text-[#d8d0b6] rounded-full border border-[#d8d0b6]/20 transition-transform">
                          <Upload className="w-5 h-5" />
                        </div>
                        <div>
@@ -1507,7 +1507,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setIsEditingFuture(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded font-bold text-white">Save</button>
+              <button type="submit" className="px-4 py-2 bg-[#bfae7d] hover:bg-[#d8d0b6] rounded font-bold text-white">Save</button>
             </div>
           </form>
         </div>
@@ -1529,7 +1529,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setIsEditingChangelog(null)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded font-bold text-white">Save</button>
+              <button type="submit" className="px-4 py-2 bg-[#bfae7d] hover:bg-[#d8d0b6] rounded font-bold text-white">Save</button>
             </div>
           </form>
         </div>
@@ -1601,7 +1601,7 @@ export default function AdminDashboard() {
             />
             <div className="flex justify-end gap-2">
               <button onClick={() => setIsImporting(false)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
-              <button onClick={handleImportText} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded font-bold text-white">Import</button>
+              <button onClick={handleImportText} className="px-4 py-2 bg-[#bfae7d] hover:bg-[#d8d0b6] rounded font-bold text-white">Import</button>
             </div>
           </div>
         </div>
@@ -1621,7 +1621,7 @@ export default function AdminDashboard() {
             />
             <div className="flex justify-end gap-2">
               <button onClick={() => setIsImportingFuture(false)} className="px-4 py-2 rounded text-white/60 hover:text-white">Cancel</button>
-              <button onClick={handleImportFutureText} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded font-bold text-white">Import</button>
+              <button onClick={handleImportFutureText} className="px-4 py-2 bg-[#bfae7d] hover:bg-[#d8d0b6] rounded font-bold text-white">Import</button>
             </div>
           </div>
         </div>
@@ -1630,13 +1630,13 @@ export default function AdminDashboard() {
       {isSheetsModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-2xl">
-            <h2 className="text-xl font-bold mb-2 font-heading text-cyan-400">Sync Levels from Google Sheets (CSV)</h2>
+            <h2 className="text-xl font-bold mb-2 font-heading text-[#cfbe94]">Sync Levels from Google Sheets (CSV)</h2>
             <p className="text-sm text-white/60 mb-4">
               Publish your Google Sheet to the web as a CSV (**File &gt; Share &gt; Publish to web &gt; Comma-separated values (.csv)**), then paste the generated URL below:
             </p>
             <input 
               type="text"
-              className="w-full bg-black border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-cyan-500 font-mono"
+              className="w-full bg-black border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-300 font-mono"
               value={sheetsUrl}
               onChange={e => setSheetsUrl(e.target.value)}
               placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv"
@@ -1662,7 +1662,7 @@ export default function AdminDashboard() {
               </button>
               <button 
                 onClick={handleSyncSheets} 
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:-translate-y-0.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-cyan-500/15 transition-all disabled:opacity-50"
+                className="px-4 py-2 bg-gradient-to-r from-[#d2c89e] to-[#d8d0b6] hover:-translate-y-0.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-[#cfbe94]/15 transition-all disabled:opacity-50"
                 disabled={isSyncingSheets}
               >
                 {isSyncingSheets ? "Syncing..." : "Sync Now"}
@@ -1688,14 +1688,14 @@ export default function AdminDashboard() {
       {submissionWithComment && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto w-full h-full">
           <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl w-full max-w-md">
-            <h2 className="text-xl font-bold mb-2 font-heading text-purple-400">
+            <h2 className="text-xl font-bold mb-2 font-heading text-[#d8d0b6]">
               {submissionWithComment.action === "accept" ? "Accept Record Submission" : submissionWithComment.action === "reject" ? "Reject Record Submission" : "Delete Record Submission"}
             </h2>
             <div className="space-y-2 mb-4 bg-black/40 p-3 rounded-lg border border-white/5 text-xs text-white/70">
               <p><strong>Player:</strong> {submissionWithComment.submission.username}</p>
               <p><strong>Level Name:</strong> {submissionWithComment.submission.levelName}</p>
               <p><strong>Progress:</strong> {submissionWithComment.submission.progress}%</p>
-              <p><strong>Video Proof:</strong> <a href={submissionWithComment.submission.videoProof} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline hover:text-blue-300">Open Link</a></p>
+              <p><strong>Video Proof:</strong> <a href={submissionWithComment.submission.videoProof} target="_blank" rel="noopener noreferrer" className="text-[#cfbe94] underline hover:text-orange-200">Open Link</a></p>
             </div>
             
             <div className="mb-4">
@@ -1703,7 +1703,7 @@ export default function AdminDashboard() {
                 {submissionWithComment.action === "accept" ? "Optional Comment for Player" : submissionWithComment.action === "reject" ? "Reason for Rejection (Highly Recommended)" : "Reason for Deletion (Optional)"}
               </label>
               <textarea
-                className="w-full bg-black border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500 h-24"
+                className="w-full bg-black border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#d8d0b6] h-24"
                 value={moderatorComment}
                 onChange={e => setModeratorComment(e.target.value)}
                 placeholder={submissionWithComment.action === "accept" ? "e.g. GG! Incredible run!" : submissionWithComment.action === "reject" ? "e.g. Video proof is missing the raw attempt/clicks, or incorrect details." : "e.g. Spam submission."}
@@ -1728,7 +1728,7 @@ export default function AdminDashboard() {
                   submissionWithComment.action === "accept" 
                     ? "bg-emerald-600 hover:bg-emerald-500" 
                     : submissionWithComment.action === "reject"
-                    ? "bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    ? "bg-[#bfae7d] hover:bg-[#d8d0b6] disabled:opacity-50 disabled:cursor-not-allowed"
                     : "bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 }`}
               >

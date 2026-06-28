@@ -59,16 +59,16 @@ export default function Players() {
     if (activeTab === "creators" && key === "points") key = "createdLevels";
 
     if (key !== columnKey) return <span className="opacity-0 group-hover:opacity-50 transition-opacity ml-1">↕</span>;
-    return <span className="ml-1 text-cyan-400">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
+    return <span className="ml-1 text-[#cfbe94]">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case "Слеер": return "text-red-400 bg-red-400/10 border-red-400/20";
       case "Верифер": return "text-emerald-400 bg-emerald-400/10 border-emerald-400/20";
-      case "Креатор": return "text-blue-400 bg-blue-400/10 border-blue-400/20";
-      case "Хостер": return "text-purple-400 bg-purple-400/10 border-purple-400/20";
-      case "Админ": return "text-amber-400 bg-amber-400/10 border-amber-400/20";
+      case "Креатор": return "text-[#cfbe94] bg-[#cfbe94]/10 border-[#cfbe94]/20";
+      case "Хостер": return "text-[#d8d0b6] bg-[#d8d0b6]/10 border-[#d8d0b6]/20";
+      case "Админ": return "text-[#d8d0b6] bg-[#d8d0b6]/10 border-[#d8d0b6]/20";
       default: return "text-zinc-400 bg-zinc-400/10 border-zinc-400/20";
     }
   };
@@ -96,7 +96,7 @@ export default function Players() {
               placeholder="Search players..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-cyan-500/50 transition-all backdrop-blur-sm text-slate-100 placeholder-white/30"
+              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-amber-300/50 transition-all backdrop-blur-sm text-slate-100 placeholder-white/30"
             />
           </div>
         </div>
@@ -197,7 +197,7 @@ export default function Players() {
                         
                         {/* Rank */}
                         <div className={`text-xl font-mono font-bold w-12 ${
-                          (activeTab === "slayers" ? player.rank : (i+1)) === 1 ? "text-cyan-400" :
+                          (activeTab === "slayers" ? player.rank : (i+1)) === 1 ? "text-[#cfbe94]" :
                           (activeTab === "slayers" ? player.rank : (i+1)) <= 5 ? "text-white/60" :
                           "text-white/20"
                         }`}>
@@ -207,7 +207,7 @@ export default function Players() {
                         {/* Player Info */}
                         <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg shrink-0 ${
-                            (activeTab === "slayers" ? player.rank : (i+1)) === 1 ? "bg-gradient-to-br from-cyan-400 to-blue-500 shadow-lg shadow-cyan-500/20 text-white" : "bg-white/5 text-white/60 group-hover:bg-white/10 group-hover:text-white"
+                            (activeTab === "slayers" ? player.rank : (i+1)) === 1 ? "bg-gradient-to-br from-[#cfbe94] to-[#d8d0b6] shadow-lg shadow-[#cfbe94]/20 text-white" : "bg-white/5 text-white/60 group-hover:bg-white/10 group-hover:text-white"
                           } transition-all`}>
                             {player.username.charAt(0)}
                           </div>
@@ -231,7 +231,7 @@ export default function Players() {
                           {activeTab === "slayers" && (
                             <>
                               <div 
-                                className="font-semibold text-white/90 text-sm hover:text-cyan-400 transition-colors"
+                                className="font-semibold text-white/90 text-sm hover:text-[#cfbe94] transition-colors"
                                 onClick={(e) => {
                                   if (player.hardestDemonId) {
                                     e.preventDefault();
@@ -248,7 +248,7 @@ export default function Players() {
                         </div>
 
                         {/* Primary Stat (Points or Created) */}
-                        <div className="text-right font-medium text-cyan-400 text-sm">
+                        <div className="text-right font-medium text-[#cfbe94] text-sm">
                           {activeTab === "slayers" ? player.points.toLocaleString() : player.createdLevels}
                         </div>
 
@@ -258,7 +258,7 @@ export default function Players() {
                         </div>
 
                         {/* Action */}
-                        <div className="flex justify-end text-white/20 group-hover:text-cyan-400 transition-colors">
+                        <div className="flex justify-end text-white/20 group-hover:text-[#cfbe94] transition-colors">
                           <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </div>
                       </div>
