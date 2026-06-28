@@ -9,8 +9,6 @@ import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/f
 import { db } from "@/lib/firebase";
 import { handleFirestoreError, OperationType } from "@/lib/firebaseError";
 
-import logoImg from "@/assets/logo.png";
-
 const navItems = [
   { key: "nav.demonList", path: "/top", icon: Trophy },
   { key: "nav.futureList", path: "/future", icon: Swords },
@@ -75,11 +73,6 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <img 
-              src={logoImg}
-              alt="TMG Demon List Logo" 
-              className="h-8 w-auto object-contain transform group-hover:scale-105 transition-transform duration-300" 
-            />
             <span className="font-heading font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
               TMG <span className="text-[#d8d0b6] font-black italic">LIST</span>
             </span>
