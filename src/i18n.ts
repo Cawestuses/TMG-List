@@ -257,7 +257,7 @@ const resources = {
         }
       },
       levels: {
-        title: "Топ Демонов",
+        title: "Топы",
         subtitle: "Самые сложные уровни на данный момент.",
         search: "Поиск уровней...",
         rank: "Топ",
