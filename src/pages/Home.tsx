@@ -21,7 +21,8 @@ export default function Home() {
   const topLevels = levels.slice(0, 3);
   const { t } = useTranslation();
 
-  const userPlayer = user ? players.find(p => (p.username || "").trim().toLowerCase() === (user.email?.split('@')[0] || "").trim().toLowerCase()) : null;
+  const currentUsername = user?.username || user?.email?.split('@')[0] || '';
+  const userPlayer = user ? players.find(p => (p.username || "").trim().toLowerCase() === currentUsername.trim().toLowerCase()) : null;
   const userCountry = userPlayer?.country || "RU";
 
   return (

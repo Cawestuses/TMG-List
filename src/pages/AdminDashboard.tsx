@@ -4,7 +4,7 @@ import { Footer } from "../components/layout/Footer";
 import { useAuth } from "../lib/auth";
 import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, updateDoc, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { Level, Verifier, FutureLevel, RecordSubmission, ChangelogItem } from "../types";
+import { Level, Verifier, FutureLevel, BeautyLevel, RecordSubmission, ChangelogItem } from "../types";
 import { Navigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { calculatePointsForRank } from "../hooks/usePlayers";
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
       await setDoc(doc(db, "moderator_logs", logId), {
         id: logId,
         moderatorEmail: user?.email || "",
-        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        moderatorUsername: user?.username || (user?.email ? user.email.split('@')[0] : "Admin"),
         action: "updated_role",
         details: `Changed role of user "${profileId}" to "${newRole}"`,
         timestamp: new Date().toISOString()
@@ -190,7 +190,7 @@ export default function AdminDashboard() {
       await setDoc(doc(db, "moderator_logs", logId), {
         id: logId,
         moderatorEmail: user?.email || "",
-        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        moderatorUsername: user?.username || (user?.email ? user.email.split('@')[0] : "Admin"),
         action: "deleted_profile",
         details: `Deleted user profile entry: "${profileToDelete}".`,
         timestamp: new Date().toISOString()
@@ -211,7 +211,7 @@ export default function AdminDashboard() {
       await setDoc(doc(db, "moderator_logs", logId), {
         id: logId,
         moderatorEmail: user?.email || "",
-        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        moderatorUsername: user?.username || (user?.email ? user.email.split('@')[0] : "Admin"),
         action: "updated_settings",
         details: `Updated site logo URL`,
         timestamp: new Date().toISOString()
@@ -253,10 +253,10 @@ export default function AdminDashboard() {
   
   const loadBeautyLevels = async () => {
     const snap = await getDocs(collection(db, "beauty_levels"));
-    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const sorted = data.sort((a, b) => a.rank - b.rank);
+    const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as BeautyLevel[];
+    const sorted = data.sort((a, b) => (a.rank || 0) - (b.rank || 0));
     setBeautyLevels(sorted);
-    updateBeautyLevelsCache(sorted as any);
+    updateBeautyLevelsCache(sorted);
   };
   
   const loadVerifiers = async () => {
@@ -434,7 +434,7 @@ export default function AdminDashboard() {
       await setDoc(doc(db, "moderator_logs", logId), {
         id: logId,
         moderatorEmail: user?.email || "",
-        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        moderatorUsername: user?.username || (user?.email ? user.email.split('@')[0] : "Admin"),
         action: action === "accept" ? "approved_record" : action === "reject" ? "rejected_record" : "deleted_record",
         details: `${action === "accept" ? "Approved" : action === "reject" ? "Rejected" : "Deleted"} submission for level "${submission.levelName}" by player "${submission.username}" with progress ${submission.progress}%. Comment: "${moderatorComment.trim()}"`,
         timestamp: new Date().toISOString()
@@ -479,7 +479,7 @@ export default function AdminDashboard() {
         await setDoc(doc(db, "moderator_logs", logId), {
           id: logId,
           moderatorEmail: user?.email || "",
-          moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+          moderatorUsername: user?.username || (user?.email ? user.email.split('@')[0] : "Admin"),
           action: "fixed_ranks",
           details: `Triggered automatic fix for level ranks and points. Corrected ${updatedCount} levels.`,
           timestamp: new Date().toISOString()
@@ -653,7 +653,7 @@ export default function AdminDashboard() {
       await setDoc(doc(db, "moderator_logs", logId), {
         id: logId,
         moderatorEmail: user?.email || "",
-        moderatorUsername: user?.email ? user.email.split('@')[0] : "Admin",
+        moderatorUsername: user?.username || (user?.email ? user.email.split('@')[0] : "Admin"),
         action: isNew ? "added_level" : "edited_level",
         details: `${isNew ? "Added" : "Edited"} level "${levelToSave.name}" at rank ${levelToSave.rank} (points automatically calculated: ${levelToSave.points})`,
         timestamp: new Date().toISOString()
@@ -878,7 +878,7 @@ export default function AdminDashboard() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold font-heading">{t("admin.title")}</h1>
         <div className="flex items-center gap-4">
-          <span className="text-white/60 text-sm">{user.email?.replace('@obsidian.local', '')}</span>
+          <span className="text-white/60 text-sm">{user.username || user.email?.replace('@obsidian.local', '')}</span>
           <button onClick={logout} className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm">{t("admin.signOut")}</button>
         </div>
       </div>

@@ -219,16 +219,43 @@ const resources = {
         }
       },
       common: {
-        loading: "Loading..."
+        loading: "Loading...",
+        saving: "Saving..."
       },
       navbar: {
         adminDashboard: "Admin Dashboard",
-        notifications: "Notifications"
+        notifications: "Notifications",
+        accountSettings: "Account Settings"
       },
       notifications: {
         title: "Notifications",
         markAllAsRead: "Mark all as read",
         noNotifications: "No notifications yet."
+      },
+      account: {
+        settingsTitle: "Security & Account",
+        settingsSubtitle: "Manage account username and password",
+        changeLoginTab: "Change Login",
+        changePasswordTab: "Change Password",
+        currentLoginLabel: "Current Login:",
+        newLoginLabel: "New Username / Email",
+        currentPasswordLabel: "Current Password (for confirmation)",
+        newPasswordLabel: "New Password (min 6 chars)",
+        confirmPasswordLabel: "Confirm New Password",
+        saveLoginBtn: "Update Login",
+        savePasswordBtn: "Update Password",
+        loginSuccess: "Login successfully updated!",
+        passwordSuccess: "Password successfully updated!",
+        loginEmpty: "Please enter a new login",
+        currentPasswordRequired: "Current password is required",
+        passwordTooShort: "New password must be at least 6 characters",
+        passwordsDontMatch: "Passwords do not match",
+        wrongPassword: "Invalid current password.",
+        loginTaken: "This login is already taken by another user.",
+        reauthRequired: "Please re-login to proceed.",
+        weakPassword: "Password is too weak.",
+        loginError: "Failed to change login.",
+        passwordError: "Failed to change password."
       }
     }
   },
@@ -449,16 +476,43 @@ const resources = {
         }
       },
       common: {
-        loading: "Загрузка..."
+        loading: "Загрузка...",
+        saving: "Сохранение..."
       },
       navbar: {
         adminDashboard: "Админ Панель",
-        notifications: "Уведомления"
+        notifications: "Уведомления",
+        accountSettings: "Настройки аккаунта"
       },
       notifications: {
         title: "Уведомления",
         markAllAsRead: "Пометить все как прочитанные",
         noNotifications: "Нет уведомлений."
+      },
+      account: {
+        settingsTitle: "Безопасность и аккаунт",
+        settingsSubtitle: "Управление логином и паролем аккаунта",
+        changeLoginTab: "Смена логина",
+        changePasswordTab: "Смена пароля",
+        currentLoginLabel: "Текущий логин:",
+        newLoginLabel: "Новый логин / email",
+        currentPasswordLabel: "Текущий пароль (для подтверждения)",
+        newPasswordLabel: "Новый пароль (мин. 6 символов)",
+        confirmPasswordLabel: "Подтвердите новый пароль",
+        saveLoginBtn: "Обновить логин",
+        savePasswordBtn: "Обновить пароль",
+        loginSuccess: "Логин успешно изменён!",
+        passwordSuccess: "Пароль успешно изменён!",
+        loginEmpty: "Пожалуйста, введите новый логин",
+        currentPasswordRequired: "Введите текущий пароль",
+        passwordTooShort: "Новый пароль должен содержать минимум 6 символов",
+        passwordsDontMatch: "Пароли не совпадают",
+        wrongPassword: "Неверный текущий пароль.",
+        loginTaken: "Этот логин уже занят другим пользователем.",
+        reauthRequired: "Требуется повторный вход в аккаунт.",
+        weakPassword: "Пароль слишком слабый.",
+        loginError: "Не удалось изменить логин.",
+        passwordError: "Не удалось изменить пароль."
       }
     }
   }

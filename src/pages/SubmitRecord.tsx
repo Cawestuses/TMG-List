@@ -38,7 +38,7 @@ export default function SubmitRecord() {
 
     setIsSubmitting(true);
     
-    const username = user.email ? user.email.split('@')[0] : "Player";
+    const username = user?.username || (user?.email ? user.email.split('@')[0] : "Player");
     
     try {
       const envUrl = import.meta.env.VITE_API_URL || "";

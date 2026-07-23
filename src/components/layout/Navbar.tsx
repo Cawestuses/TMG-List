@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { Menu, X, Trophy, Swords, Users, BarChart2, FileUp, Languages, LogIn, LogOut, Settings, User, Bell } from "lucide-react";
+import { Menu, X, Trophy, Swords, Users, BarChart2, FileUp, Languages, LogIn, LogOut, Settings, User, Bell, KeyRound } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
@@ -9,6 +9,7 @@ import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/f
 import { db } from "@/lib/firebase";
 import { handleFirestoreError, OperationType } from "@/lib/firebaseError";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { AccountSettingsModal } from "../ui/AccountSettingsModal";
 
 const navItems = [
   { key: "nav.demonList", path: "/top", icon: Trophy },
@@ -21,6 +22,7 @@ const navItems = [
 export function Navbar() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { t, i18n } = useTranslation();
   const { user, isAdmin, isElderModer, isModerator, logout } = useAuth();
 
@@ -191,12 +193,19 @@ export function Navbar() {
                   )}
                 </div>
                 <Link 
-                  to={`/player/${encodeURIComponent(user.email?.split('@')[0] || '')}`} 
+                  to={`/player/${encodeURIComponent(user.username || user.email?.split('@')[0] || '')}`} 
                   className="px-3 py-1.5 bg-white/5 hover:bg-[#d8d0b6]/10 border border-white/10 hover:border-[#d8d0b6]/35 rounded-full text-xs text-white/90 hover:text-[#cfbe94] transition-all duration-300 flex items-center gap-2 max-w-[150px] shadow-sm shadow-[#d8d0b6]/5 hover:shadow-[#d8d0b6]/10"
                 >
                   <User className="w-3.5 h-3.5 text-[#d8d0b6] shrink-0" />
-                  <span className="truncate font-semibold tracking-wide font-mono">{user.email?.split('@')[0]}</span>
+                  <span className="truncate font-semibold tracking-wide font-mono">{user.username || user.email?.split('@')[0]}</span>
                 </Link>
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="p-2 text-zinc-400 hover:text-[#d8d0b6] hover:bg-white/5 rounded-md transition-colors"
+                  title={t("navbar.accountSettings", "Настройки аккаунта")}
+                >
+                  <KeyRound className="w-4 h-4" />
+                </button>
                 <button
                   onClick={() => logout()}
                   className="p-2 text-zinc-400 hover:text-white hover:bg-white/5 rounded-md transition-colors flex items-center gap-2 text-sm font-medium"
@@ -278,13 +287,23 @@ export function Navbar() {
                   </Link>
                 )}
                 <Link 
-                  to={`/player/${encodeURIComponent(user.email?.split('@')[0] || '')}`}
+                  to={`/player/${encodeURIComponent(user.username || user.email?.split('@')[0] || '')}`}
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 px-3 py-2 text-base font-medium text-white/80 hover:text-[#d8d0b6] transition-colors"
                 >
                   <User className="w-5 h-5 text-[#d8d0b6] shrink-0" />
-                  <span className="truncate">{user.email?.split('@')[0]}</span>
+                  <span className="truncate">{user.username || user.email?.split('@')[0]}</span>
                 </Link>
+                <button 
+                  onClick={() => {
+                    setIsSettingsOpen(true);
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-base font-medium text-white/80 hover:text-[#d8d0b6] transition-colors"
+                >
+                  <KeyRound className="w-5 h-5 text-[#d8d0b6] shrink-0" />
+                  <span>{t("navbar.accountSettings", "Настройки аккаунта")}</span>
+                </button>
                 <button
                   onClick={() => {
                     logout();
@@ -309,6 +328,11 @@ export function Navbar() {
           </div>
         </motion.div>
       )}
+
+      <AccountSettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
     </nav>
   );
 }

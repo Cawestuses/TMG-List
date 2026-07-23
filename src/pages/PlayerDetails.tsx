@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { GlowCard } from "../components/ui/GlowCard";
-import { Globe, Trophy, Sword, Target, Medal, Code, Edit2, Check, X, Shield, MessageCircle, Gamepad2, AlignLeft } from "lucide-react";
+import { Globe, Trophy, Sword, Target, Medal, Code, Edit2, Check, X, Shield, MessageCircle, Gamepad2, AlignLeft, KeyRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { usePlayers } from "../hooks/usePlayers";
 import { useAuth } from "../lib/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { getFlagEmoji } from "../utils/country";
+import { AccountSettingsModal } from "../components/ui/AccountSettingsModal";
 
 export default function PlayerDetails() {
   const { id } = useParams();
@@ -20,6 +21,7 @@ export default function PlayerDetails() {
   const { t } = useTranslation();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editProfile, setEditProfile] = useState({ discord: "", gdUsername: "", country: "", description: "" });
   const [saving, setSaving] = useState(false);
   const player = useMemo(() => {
@@ -77,7 +79,8 @@ export default function PlayerDetails() {
     }
   }, [isEditing, playerDiscord, playerGd, playerCountry, playerDesc]);
 
-  const canEdit = user && (isAdmin || user.email?.split('@')[0].toLowerCase() === player?.username.toLowerCase());
+  const myUsername = user?.username || user?.email?.split('@')[0] || '';
+  const canEdit = user && (isAdmin || myUsername.toLowerCase() === player?.username.toLowerCase());
 
   const handleSaveProfile = async () => {
     if (!player) return;
@@ -141,9 +144,19 @@ export default function PlayerDetails() {
                     <div className="flex items-center justify-center md:justify-start gap-4 mb-2">
                       <h1 className="text-4xl md:text-6xl font-black font-heading tracking-tight">{player.username}</h1>
                       {canEdit && !isEditing && (
-                        <button onClick={() => setIsEditing(true)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white/50 hover:text-white transition-colors">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setIsEditing(true)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white/50 hover:text-white transition-colors" title={t("common.edit", "Редактировать профиль")}>
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => setIsSettingsOpen(true)}
+                            className="px-3 py-1.5 bg-[#d8d0b6]/10 hover:bg-[#d8d0b6]/20 border border-[#d8d0b6]/30 text-[#d8d0b6] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                            title={t("account.settingsTitle", "Настройки аккаунта")}
+                          >
+                            <KeyRound className="w-3.5 h-3.5" />
+                            <span>{t("account.changeLoginTab", "Сменить логин/пароль")}</span>
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -399,6 +412,11 @@ export default function PlayerDetails() {
           </GlowCard>
         </div>
       </div>
+
+      <AccountSettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
     </div>
   );
 }
